@@ -5,7 +5,7 @@ import Button from '../ui/Button.astro';
 import Container from '../ui/Container.astro';
 import SpecularButton from '../islands/SpecularButton.tsx';
 import RotatingText from '../islands/RotatingText.tsx';
-import heroTruck from '../../assets/images/hero-truck.webp';
+import pinkysTruck from '../../assets/images/pinkys-truck.png';
 import { business } from '../../data/business';
 import { specularPink } from '../../lib/specularPresets';
 
@@ -26,34 +26,36 @@ const badges = [
 ---
 
 <section class="relative overflow-hidden bg-white">
-  <!-- mobile-only ambient backdrop: looping, low-opacity Seattle skyline
-       reveal. Swapped out at the same lg breakpoint the desktop truck
-       photo uses below (that one is hidden here, this one is hidden
-       there), so mobile always has some photographic depth behind the
-       text even though the truck box only makes sense at wide viewports.
-       Shipped as an animated WebP rather than <video> so it just
-       autoplays/loops with zero JS and no inline-playback quirks, and it
-       lives in /public rather than /src/assets because astro:assets'
-       image pipeline flattens animated WebP to a single frame, which
-       would kill the loop. Pre-cropped to a portrait slice centered on
-       the Space Needle at encode time (source is a 16:9 landscape clip;
-       object-cover alone would zoom into an unrecognizable sliver of it
-       inside this section's portrait aspect on phones) and encoded small
-       on purpose (560px wide, gaussian-blurred, 10fps) for this
-       low-opacity ambient use - a sharp full-res version would look out
-       of place at this size and cost several times the bytes for detail
-       nobody can see through low opacity. Masked to fade at top/bottom
-       instead of a hard-edged box, same reasoning as the mask below:
-       dissolving into the white page beats a painted-on rectangle. -->
+  <!-- ambient backdrop across all breakpoints: looping Seattle waterfront
+       skyline (downtown towers + a cargo ship/ferry drifting across),
+       full-bleed behind the whole section. Second pass on this asset - v1
+       used a different source clip (a tilt-down reveal), gaussian-blurred
+       and cropped tight to a narrow portrait sliver at ~45% opacity, which
+       read as a static texture rather than a video. This version is
+       intentionally sharp (no blur) at a much more generous crop (1300px
+       of the source's 1920 width, not 670px) and higher opacity (70%) so
+       the motion actually reads. Trade-off: sharp photographic motion
+       compresses far worse than blur did in animated WebP (no inter-frame
+       prediction like a real video codec), so fps/resolution/duration
+       were all cut harder to compensate (720px wide, 8fps, 8s straight
+       loop - no boomerang here, since this clip's motion is boats drifting
+       one direction, not a reversible camera tilt) to land back near the
+       same ~1.3MB file size. Still an animated WebP rather than <video>
+       (zero JS, no inline-playback quirks) living in /public rather than
+       /src/assets (astro:assets' image pipeline flattens animated WebP to
+       a single frame, which would kill the loop). Masked to fade at
+       top/bottom instead of a hard-edged box, same reasoning as the mask
+       below: dissolving into the white page beats a painted-on
+       rectangle. -->
   <div
-    class="pointer-events-none absolute inset-0 lg:hidden"
+    class="pointer-events-none absolute inset-0"
     style="mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%);"
     aria-hidden="true"
   >
     <img
-      src="/hero-skyline-loop.webp"
+      src="/hero-seattle-loop.webp"
       alt=""
-      class="h-full w-full object-cover opacity-45"
+      class="h-full w-full object-cover opacity-70"
       loading="eager"
       decoding="async"
     />
@@ -68,36 +70,74 @@ const badges = [
   >
   </div>
 
-  <!-- background photo: kept out of the text column (not full-bleed) on
-       purpose - the truck itself is painted with the same "Pinky's
-       Plumbing" wordmark as the headline, and letting it run full-width
-       under the text reads as a duplicate/collision.
+  <!-- desktop-only floating truck cutout: this is a real transparent-alpha
+       PNG (the file already carries a soft feathered edge + a baked-in
+       ground shadow, confirmed by compositing it over a light background
+       before wiring it in - it is NOT the dark studio vignette it looks
+       like in a flat image viewer), so it just sits directly on the
+       ambient skyline backdrop above with no extra masking needed. Sized
+       by width with the image's own aspect ratio (object-contain, not
+       cover) since it's a wide side-profile shot - stretching it to cover
+       a box would crop the cab or the shadow. Anchored from the section's
+       TOP (not bottom) on purpose: this used to be bottom-anchored, but
+       that ties the truck's position to the section's height - when the
+       hero was later tightened (lg:py/gap/margins trimmed) to fit one
+       viewport with no scroll, the section got shorter, the bottom anchor
+       point moved up with it, and the truck's roof clipped through
+       overflow-hidden above the section's top edge. Anchoring from the
+       top instead is stable regardless of how tall the section ends up
+       being. lg-only: mobile has no room for a floating side-profile
+       truck next to the text. -->
+  <!-- badges are duplicated (not reused via CSS reflow) because this list
+       lives in a completely different coordinate space on desktop - it's
+       section-relative, right-aligned under the truck - versus the
+       mobile/tablet copy further down, which is a normal in-flow child of
+       the left text column. Trying to reposition one shared element
+       between those two contexts with responsive classes alone isn't
+       reliable; two small, independently readable lists is simpler than
+       one that needs to teleport. The mobile copy gets lg:hidden so only
+       one is ever visible at a time.
 
-       No feather/mask at all - a clean hard edge has zero blended pixels
-       (either full-color photo or plain white background, nothing in
-       between), which is what "no white layer" actually requires.
-
-       Box width/crop restored to 52% + object-[62%_center]: those had been
-       widened to 60%/67% purely to give the (now-removed) mask more room
-       to fade. With no mask left to justify it, the wider box just pulled
-       more of the cab into frame - including the driver's face sitting
-       right at the seam, cut awkwardly in half - which is what read as
-       "odd." Reverting closes that box back down over the cab. -->
-  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[52%] lg:block">
+       inset-y-0 + justify-center (not a fixed top offset) - the truck
+       block sits inside its own full-height column and centers itself
+       there, the same way Container's justify-center centers the left
+       text column. Both sides now key off the same "centered in the
+       section" rule instead of one being pinned near the top, which read
+       as misaligned/floating higher than the left column. -->
+  <div
+    class="absolute inset-y-0 right-0 hidden w-[50.6%] max-w-[792px] translate-y-[70px] flex-col items-center justify-center gap-6 lg:flex"
+  >
     <Image
-      src={heroTruck}
-      alt="Pinky's Plumbing service truck parked on the Seattle waterfront"
-      widths={[960, 1400, 2000]}
-      sizes="52vw"
+      src={pinkysTruck}
+      alt="Pinky's Plumbing service truck"
+      widths={[480, 720, 1000]}
+      sizes="46vw"
       quality="high"
-      class="h-full w-full object-cover object-[62%_center]"
+      format="webp"
+      class="pointer-events-none h-auto w-full object-contain"
       loading="eager"
       fetchpriority="high"
+      aria-hidden="true"
     />
+    <ul class="flex flex-wrap justify-center gap-x-6 gap-y-2" style="--reveal-delay:150ms">
+      {
+        badges.map(({ icon: Icon, label }) => (
+          <li class="text-ink-700 flex items-center gap-2 text-sm font-semibold">
+            <Icon className="size-4 text-pink-600" aria-hidden="true" />
+            {label}
+          </li>
+        ))
+      }
+    </ul>
   </div>
 
+  <!-- lg padding/gaps/spacing are intentionally tighter than sm/mobile's
+       (min-h-0 instead of inheriting the 680px floor, py-4 instead of 28,
+       gap-3 instead of 8) so the whole hero - headline through the badges
+       row - fits inside one desktop viewport (tested down to 1440x768)
+       with no scroll, without touching the mobile/tablet layout at all. -->
   <Container
-    class="relative flex min-h-[600px] flex-col justify-center gap-8 py-24 sm:min-h-[640px] sm:py-28 lg:min-h-[680px]"
+    class="relative flex min-h-[600px] flex-col justify-center gap-8 py-24 sm:min-h-[640px] sm:py-28 lg:min-h-0 lg:gap-3 lg:py-4"
   >
     <div class="max-w-2xl lg:max-w-xl" data-reveal>
       <span
@@ -111,7 +151,7 @@ const badges = [
       </span>
 
       <h1
-        class="font-display text-ink-900 mt-6 text-[2.85rem] leading-[0.98] font-extrabold tracking-[-0.03em] text-balance sm:text-[4.25rem] lg:text-[5rem]"
+        class="font-display text-ink-900 mt-6 text-[2.85rem] leading-[0.98] font-extrabold tracking-[-0.03em] text-balance sm:text-[4.25rem] lg:mt-3 lg:text-[5rem]"
       >
         <RotatingText
           client:load
@@ -152,7 +192,7 @@ const badges = [
         />
       </h1>
 
-      <p class="text-ink-600 mt-6 max-w-lg text-lg leading-relaxed text-balance sm:text-xl">
+      <p class="text-ink-600 mt-6 max-w-lg text-lg leading-relaxed text-balance sm:text-xl lg:mt-3">
         Call Pinky's, Seattle's 24-hour residential &amp; commercial plumbers. Honest pricing, fast dispatch, and a
         promise to treat your home like our own.
       </p>
@@ -162,18 +202,30 @@ const badges = [
            to the bottom of the screen there, so a second pair of the same
            two actions right here was pure redundancy. Desktop has no
            sticky bar equivalent, so these stay for lg+. -->
-      <div class="mt-9 hidden gap-3.5 lg:flex lg:items-center">
-        <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible>
+      <div class="mt-9 hidden gap-3.5 lg:mt-3 lg:flex lg:items-center">
+        <SpecularButton
+          href="/contact-us/"
+          size="lg"
+          {...specularPink}
+          client:visible
+          className="h-14 flex-1 justify-center"
+        >
           Get a Free Estimate
           <ArrowRight className="size-4" aria-hidden="true" />
         </SpecularButton>
-        <Button href={`tel:${business.hotline.tel}`} variant="secondary" size="lg" icon={Phone}>
+        <Button
+          href={`tel:${business.hotline.tel}`}
+          variant="secondary"
+          size="lg"
+          icon={Phone}
+          class="h-14 flex-1 justify-center"
+        >
           {business.hotline.display}
         </Button>
       </div>
     </div>
 
-    <ul class="flex flex-wrap gap-x-8 gap-y-3" data-reveal style="--reveal-delay:150ms">
+    <ul class="flex flex-wrap gap-x-8 gap-y-3 lg:hidden" data-reveal style="--reveal-delay:150ms">
       {
         badges.map(({ icon: Icon, label }) => (
           <li class="text-ink-700 flex items-center gap-2 text-sm font-semibold">

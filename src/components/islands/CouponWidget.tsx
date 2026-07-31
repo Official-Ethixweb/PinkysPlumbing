@@ -211,7 +211,7 @@ export default function CouponWidget() {
             <div className="border-ink-100 shrink-0 space-y-2.5 border-t bg-mist-100 p-4">
               <a
                 href={`tel:${business.hotline.tel}`}
-                className="font-display flex w-full items-center justify-center gap-2 rounded-full bg-pink-600 px-5 py-3 text-sm font-bold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.25)_inset] transition-colors hover:bg-pink-500"
+                className="font-display bg-pink-cta flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-teal-900 shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset] transition-all hover:brightness-95"
               >
                 <Phone className="size-4" aria-hidden="true" />
                 Call to Redeem: {business.hotline.display}

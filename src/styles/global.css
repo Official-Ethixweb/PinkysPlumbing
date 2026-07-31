@@ -17,9 +17,12 @@
      extended into a full scale for depth (gradients, hover states).
      pink-350 is the literal brand accent hex (#F37DBB) — reserved for
      soft badge/chip fills, borders, and glow tint on light surfaces.
-     Solid CTA fills use pink-600, which keeps white-label text at a
-     verified 5.2:1 contrast ratio (pink-350/500 read too light for
-     that on a white page). */
+     pink-600 is kept in the scale (still used for hover/outline/icon
+     accents) but is NO LONGER the solid CTA fill - superseded by
+     pink-cta below, on request. Because pink-cta is light, CTA text on
+     it must be a dark color (teal-900), not white - white-on-pink-600
+     had a verified 5.2:1 contrast ratio; white-on-pink-cta would be
+     ~2.3:1 and fail WCAG AA. Don't pair pink-cta with white text. */
   --color-pink-50: #fff1f8;
   --color-pink-100: #ffe0f0;
   --color-pink-200: #ffbfe1;
@@ -31,6 +34,8 @@
   --color-pink-700: #ac0a5c;
   --color-pink-800: #870a49;
   --color-pink-900: #650a39;
+  /* Exact swatch requested for solid CTA button fills (#F189BA / rgb(241,137,186)). */
+  --color-pink-cta: #f189ba;
   --color-pink-950: #3d0421;
 
   /* Deep teal: the brand's #004056 anchored at teal-900, used for

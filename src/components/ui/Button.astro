@@ -36,9 +36,10 @@ const sizes = {
 
 const variants = {
   primary:
-    // pink-600, not pink-500: white text on pink-500 is a 4.06:1 contrast
-    // ratio, just under the 4.5:1 WCAG AA threshold for this text size.
-    'bg-pink-600 text-white shadow-[0_1px_0_0_rgba(255,255,255,0.25)_inset,0_10px_24px_-8px_rgba(238,30,135,0.65)] hover:bg-pink-500 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.3)_inset,0_16px_32px_-8px_rgba(238,30,135,0.75)] hover:-translate-y-0.5',
+    // pink-cta is light, so the label is teal-900 (dark), not white -
+    // white text on this fill would be ~2.3:1 and fail WCAG AA. Hover
+    // darkens via brightness() rather than a second color token.
+    'bg-pink-cta text-teal-900 shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset,0_10px_24px_-8px_rgba(241,137,186,0.65)] hover:brightness-95 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.45)_inset,0_16px_32px_-8px_rgba(241,137,186,0.75)] hover:-translate-y-0.5',
   secondary:
     'border-2 border-teal-900 bg-white text-teal-900 shadow-card hover:-translate-y-0.5 hover:bg-teal-900 hover:text-white hover:shadow-card-hover',
   outline: 'border-2 border-pink-600/70 text-pink-600 hover:border-pink-600 hover:bg-pink-600/10',
