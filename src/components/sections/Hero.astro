@@ -53,17 +53,19 @@ const badges = [
       loading="eager"
       fetchpriority="high"
     />
-    <!-- Seam blend only: a fixed-width strip (not a % of the lane, so it
-         reads the same width on every screen size) with many soft stops
-         instead of a hard 2-stop fade — an eased opacity curve rather than
-         a linear one, so it reads as a gentle emergence, not an edge. Clears
-         to fully transparent well before the lane's midpoint, so the truck
-         and wordmark stay crisp and untinted. No bottom wash — nothing
-         needs legibility help here since the headline never sits over the
-         photo. -->
+    <!-- Seam blend only. Two things were wrong before: the band was up to
+         400px wide (30% of the lane) and opened at ~98% opacity, so the
+         first ~100px read as a flat opaque wall before it ever started
+         tapering. This version never goes above ~50% opacity even at the
+         seam (the photo shows through immediately, no "wall"), the band is
+         narrowed to a max of ~220px (hugs the left edge, most of the truck
+         stays fully untinted), and the curve front-loads its falloff — it's
+         already down to ~10% opacity by the band's midpoint instead of
+         holding high through it — so the decrease reads as gradual rather
+         than a visible edge. -->
     <div
       class="pointer-events-none absolute inset-y-0 left-0"
-      style="width: clamp(250px, 30vw, 400px); background: linear-gradient(to right, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.94) 10%, rgba(255,255,255,0.8) 22%, rgba(255,255,255,0.58) 38%, rgba(255,255,255,0.36) 54%, rgba(255,255,255,0.18) 70%, rgba(255,255,255,0.07) 85%, rgba(255,255,255,0) 100%);"
+      style="width: clamp(120px, 16vw, 220px); background: linear-gradient(to right, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.38) 12%, rgba(255,255,255,0.26) 26%, rgba(255,255,255,0.16) 42%, rgba(255,255,255,0.09) 58%, rgba(255,255,255,0.04) 75%, rgba(255,255,255,0) 100%);"
     >
     </div>
   </div>
