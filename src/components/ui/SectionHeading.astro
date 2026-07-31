@@ -23,7 +23,7 @@ const { eyebrow, title, description, align = 'center', tone = 'light', class: cl
   )}
   data-reveal
 >
-  {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+  {eyebrow && <Eyebrow tone={tone === 'light' ? 'light' : 'dark'}>{eyebrow}</Eyebrow>}
   <h2
     class={cn(
       'text-balance font-display text-4xl leading-[1.02] font-extrabold tracking-[-0.025em] sm:text-5xl md:text-[3.25rem]',

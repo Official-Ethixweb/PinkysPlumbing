@@ -39,10 +39,10 @@ const serviceTiles = [
 ];
 
 const fieldBase =
-  'w-full rounded-2xl border border-white/15 bg-white/[0.04] py-3.5 text-[15px] text-white placeholder:text-white/35 outline-none transition-colors focus:border-pink-400 focus:bg-white/[0.06]';
-const errorBase = 'border-red-400/60 focus:border-red-400';
-const labelBase = 'mb-1.5 block text-sm font-semibold text-white/80';
-const errorText = 'mt-1.5 text-xs font-medium text-red-400';
+  'w-full rounded-2xl border border-ink-200 bg-white py-3.5 text-[15px] text-ink-900 placeholder:text-ink-400 outline-none transition-colors focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10';
+const errorBase = 'border-red-500/60 focus:border-red-500';
+const labelBase = 'mb-1.5 block text-sm font-semibold text-ink-700';
+const errorText = 'mt-1.5 text-xs font-medium text-red-600';
 
 export default function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'sent'>('idle');
@@ -83,11 +83,11 @@ export default function ContactForm() {
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-        className="flex flex-col items-center gap-4 rounded-3xl border border-teal-500/30 bg-teal-500/10 p-10 text-center"
+        className="flex flex-col items-center gap-4 rounded-3xl border border-teal-500/25 bg-teal-50 p-10 text-center"
       >
-        <CheckCircle2 className="size-12 text-teal-400" aria-hidden="true" />
-        <h3 className="font-display text-xl font-bold text-white">Your email app should be open now</h3>
-        <p className="max-w-sm text-sm text-white/70">
+        <CheckCircle2 className="size-12 text-teal-700" aria-hidden="true" />
+        <h3 className="font-display text-ink-900 text-xl font-bold">Your email app should be open now</h3>
+        <p className="text-ink-600 max-w-sm text-sm">
           Hit send there to reach our office. Need it handled right this second instead?
         </p>
         <SpecularButton href={`tel:${business.hotline.tel}`} size="md" {...specularPink}>
@@ -107,7 +107,7 @@ export default function ContactForm() {
           </label>
           <div className="relative">
             <User
-              className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-white/35"
+              className="text-ink-400 pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
               aria-hidden="true"
             />
             <input
@@ -133,7 +133,7 @@ export default function ContactForm() {
           </label>
           <div className="relative">
             <Phone
-              className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-white/35"
+              className="text-ink-400 pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
               aria-hidden="true"
             />
             <input
@@ -161,7 +161,7 @@ export default function ContactForm() {
           </label>
           <div className="relative">
             <Mail
-              className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-white/35"
+              className="text-ink-400 pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
               aria-hidden="true"
             />
             <input
@@ -187,7 +187,7 @@ export default function ContactForm() {
           </label>
           <div className="relative">
             <MapPin
-              className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-white/35"
+              className="text-ink-400 pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
               aria-hidden="true"
             />
             <input
@@ -214,18 +214,18 @@ export default function ContactForm() {
           {serviceTiles.map(({ title, icon: Icon }) => (
             <label
               key={title}
-              className="has-checked:shadow-glow-pink group relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.03] px-2.5 py-4 text-center transition-colors hover:border-white/25 hover:bg-white/[0.06] has-checked:border-pink-400/60 has-checked:bg-pink-500/10"
+              className="has-checked:shadow-glow-pink group border-ink-200 hover:border-ink-300 hover:bg-ink-50 relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border bg-white px-2.5 py-4 text-center transition-colors has-checked:border-pink-500 has-checked:bg-pink-50"
             >
               <input type="radio" value={title} className="sr-only" {...register('service')} />
               <CircleCheck
-                className="absolute top-2 right-2 size-4 text-pink-400 opacity-0 transition-opacity group-has-checked:opacity-100"
+                className="absolute top-2 right-2 size-4 text-pink-600 opacity-0 transition-opacity group-has-checked:opacity-100"
                 aria-hidden="true"
               />
               <Icon
-                className="size-6 text-white/60 transition-colors group-has-checked:text-pink-400"
+                className="text-ink-400 size-6 transition-colors group-has-checked:text-pink-600"
                 aria-hidden="true"
               />
-              <span className="text-xs leading-tight font-semibold text-white/85">{title}</span>
+              <span className="text-ink-700 text-xs leading-tight font-semibold">{title}</span>
             </label>
           ))}
         </div>
@@ -267,10 +267,7 @@ export default function ContactForm() {
           Tell Us What's Going On
         </label>
         <div className="relative">
-          <MessageSquare
-            className="pointer-events-none absolute top-4 left-4 size-4 text-white/35"
-            aria-hidden="true"
-          />
+          <MessageSquare className="text-ink-400 pointer-events-none absolute top-4 left-4 size-4" aria-hidden="true" />
           <textarea
             id="message"
             rows={4}
@@ -300,7 +297,7 @@ export default function ContactForm() {
           </>
         )}
       </SpecularButton>
-      <p className="text-center text-xs text-white/50">
+      <p className="text-ink-500 text-center text-xs">
         We'll get back to you within one business day. For emergencies, please call {business.hotline.display}.
       </p>
     </form>

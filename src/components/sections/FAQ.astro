@@ -27,12 +27,12 @@ const {
 } = Astro.props;
 ---
 
-<section class="bg-ink-950 py-20 sm:py-28">
+<section class="bg-white py-20 sm:py-28">
   <Container class="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
     <div class="lg:sticky lg:top-32 lg:self-start" data-reveal="left">
       <Eyebrow>{eyebrow}</Eyebrow>
       <h2
-        class="font-display mt-4 text-4xl leading-[1.02] font-extrabold tracking-[-0.02em] text-balance text-white sm:text-5xl"
+        class="font-display text-ink-900 mt-4 text-4xl leading-[1.02] font-extrabold tracking-[-0.02em] text-balance sm:text-5xl"
       >
         <RotatingText
           client:visible
@@ -46,7 +46,7 @@ const {
           splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
         />
       </h2>
-      <p class="mt-5 max-w-sm leading-relaxed text-balance text-white/60">{description}</p>
+      <p class="text-ink-500 mt-5 max-w-sm leading-relaxed text-balance">{description}</p>
       <div class="mt-8">
         <Button href={`tel:${business.hotline.tel}`} variant="outline" size="lg" icon={Phone}>
           {business.hotline.display}
@@ -61,18 +61,18 @@ const {
             data-reveal
             name="faq-accordion"
             open={i === 0}
-            class="group rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors open:bg-white/[0.06] sm:px-7 sm:py-6"
+            class="card-elevated group open:border-pink-350/40 px-6 py-5 sm:px-7 sm:py-6"
           >
-            <summary class="font-display flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-white sm:text-lg [&::-webkit-details-marker]:hidden">
+            <summary class="font-display text-ink-900 flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold sm:text-lg [&::-webkit-details-marker]:hidden">
               {item.question}
-              <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/5 transition-colors group-open:bg-pink-500/15">
+              <span class="bg-ink-50 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors group-open:bg-pink-600/15">
                 <Plus
-                  className="size-4 shrink-0 text-pink-400 transition-transform duration-300 group-open:rotate-45"
+                  className="size-4 shrink-0 text-pink-600 transition-transform duration-300 group-open:rotate-45"
                   aria-hidden="true"
                 />
               </span>
             </summary>
-            <p class="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/65">{item.answer}</p>
+            <p class="text-ink-500 mt-4 max-w-2xl text-[15px] leading-relaxed">{item.answer}</p>
           </details>
         ))
       }

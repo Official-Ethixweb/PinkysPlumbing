@@ -51,26 +51,27 @@ const stackImages = await Promise.all(
     crumbs={[{ label: 'Home', href: '/' }, { label: 'About Us' }]}
     image={teamPhoto}
     imageAlt="The Pinky's Plumbing team lined up in front of two service trucks"
+    large
   />
 
-  <section class="bg-ink-950 py-16 sm:py-20">
+  <section class="bg-white py-16 sm:py-20">
     <Container class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-      <div class="relative mx-auto aspect-square w-full max-w-[380px]" data-reveal="left">
+      <div class="relative mx-auto aspect-square w-full max-w-[494px]" data-reveal="left">
         <PhotoStack images={stackImages} client:visible />
         <span
-          class="bg-ink-900/95 shadow-card-hover pointer-events-none absolute -right-3 -bottom-3 z-10 flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xl"
+          class="shadow-card-hover border-ink-100 text-ink-900 pointer-events-none absolute -right-3 -bottom-3 z-10 flex items-center gap-1.5 rounded-full border bg-white px-3.5 py-2 text-xs font-semibold"
         >
-          <Hand className="size-3.5 text-pink-400" aria-hidden="true" />
+          <Hand className="size-3.5 text-pink-600" aria-hidden="true" />
           Drag me
         </span>
       </div>
 
       <div data-reveal="right">
         <Eyebrow>Dependable Professionals</Eyebrow>
-        <h2 class="font-display mt-4 text-3xl leading-[1.1] font-bold text-balance text-white sm:text-4xl">
+        <h2 class="font-display text-ink-900 mt-4 text-3xl leading-[1.1] font-bold text-balance sm:text-4xl">
           Plumbers You Can Count On
         </h2>
-        <p class="mt-5 max-w-lg leading-relaxed text-balance text-white/65">
+        <p class="text-ink-600 mt-5 max-w-lg leading-relaxed text-balance">
           At Pinky's, we care about your safety, comfort, and satisfaction. Every employee is drug-tested and passes a
           thorough background check before they're allowed on a job. When one of our technicians arrives at your door,
           you can feel safe knowing they're professional, licensed, knowledgeable, and highly skilled.

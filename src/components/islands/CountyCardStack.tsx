@@ -48,7 +48,7 @@ export default function CountyCardStack({ counties }: CountyCardStackProps) {
         return (
           <Card
             key={county.name}
-            className={`bg-ink-900 flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br ${tone.wash} shadow-card-hover to-transparent p-7`}
+            className={`border-ink-100 flex flex-col justify-between overflow-hidden rounded-3xl border bg-white bg-gradient-to-br ${tone.wash} shadow-card-hover to-transparent p-7`}
           >
             <div>
               <span
@@ -56,12 +56,12 @@ export default function CountyCardStack({ counties }: CountyCardStackProps) {
               >
                 <MapPin className={`size-5 ${tone.icon}`} aria-hidden="true" strokeWidth={2} />
               </span>
-              <h3 className="font-display mt-5 text-xl font-bold text-white">{county.name}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">{county.blurb}</p>
+              <h3 className="font-display text-ink-900 mt-5 text-xl font-bold">{county.name}</h3>
+              <p className="text-ink-500 mt-2 text-sm leading-relaxed">{county.blurb}</p>
             </div>
             <a
               href={`tel:${county.phoneTel}`}
-              className="font-display mt-6 inline-flex items-center gap-2 text-base font-semibold text-white/90 transition-colors hover:text-pink-300"
+              className="font-display text-ink-800 mt-6 inline-flex items-center gap-2 text-base font-semibold transition-colors hover:text-pink-600"
             >
               <Phone className={`size-4 ${tone.icon}`} aria-hidden="true" />
               {county.phoneDisplay}

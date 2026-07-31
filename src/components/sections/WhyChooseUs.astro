@@ -15,11 +15,11 @@ const stats = [
 ];
 ---
 
-<section class="bg-ink-950 py-20 sm:py-28">
+<section class="bg-mist-100 py-20 sm:py-28">
   <Container class="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
     <div class="relative" data-reveal="left">
       <div
-        class="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-pink-500/20 to-teal-500/10 blur-2xl"
+        class="from-pink-350/25 absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br to-teal-500/10 blur-2xl"
         aria-hidden="true"
       >
       </div>
@@ -33,17 +33,17 @@ const stats = [
         class="shadow-card-hover aspect-[4/3.3] w-full rounded-[2rem] object-cover"
       />
       <div
-        class="bg-ink-900/95 shadow-card-hover absolute -right-4 -bottom-6 rounded-2xl border border-white/10 px-6 py-4 backdrop-blur-xl sm:-right-8"
+        class="shadow-card-hover border-ink-100 absolute -right-4 -bottom-6 rounded-2xl border bg-white px-6 py-4 backdrop-blur-xl sm:-right-8"
       >
-        <p class="font-display text-2xl font-bold text-white">24 Hrs</p>
-        <p class="text-xs text-white/60">Emergency response</p>
+        <p class="font-display text-ink-900 text-2xl font-bold">24 Hrs</p>
+        <p class="text-ink-500 text-xs">Emergency response</p>
       </div>
     </div>
 
     <div data-reveal="right">
       <Eyebrow>Why Choose Pinky's?</Eyebrow>
       <h2
-        class="font-display mt-4 text-3xl leading-[1.1] font-bold text-balance text-white sm:text-4xl md:text-[2.75rem]"
+        class="font-display text-ink-900 mt-4 text-3xl leading-[1.1] font-bold text-balance sm:text-4xl md:text-[2.75rem]"
       >
         <RotatingText
           client:visible
@@ -57,7 +57,7 @@ const stats = [
           splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
         />
       </h2>
-      <p class="mt-5 max-w-lg leading-relaxed text-balance text-white/65">
+      <p class="text-ink-600 mt-5 max-w-lg leading-relaxed text-balance">
         If you need plumbing help in the Seattle area, chances are someone you know already recommends Pinky's. Families
         and business owners count on us because we're licensed, background-checked, and available around the clock, day
         or night.
@@ -66,12 +66,12 @@ const stats = [
       <dl class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-2">
         {
           stats.map((s) => (
-            <div class="border-l-2 border-pink-500/40 pl-4">
+            <div class="border-pink-350 border-l-2 pl-4">
               <dt class="sr-only">{s.label}</dt>
-              <dd class="font-display text-3xl font-bold text-white">
+              <dd class="font-display text-ink-900 text-3xl font-bold">
                 <StatCounter value={s.value} suffix={s.suffix} client:visible />
               </dd>
-              <dd class="mt-1 text-xs font-medium tracking-wide text-white/50 uppercase">{s.label}</dd>
+              <dd class="text-ink-500 mt-1 text-xs font-medium tracking-wide uppercase">{s.label}</dd>
             </div>
           ))
         }

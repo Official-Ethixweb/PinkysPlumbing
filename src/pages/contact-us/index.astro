@@ -35,35 +35,35 @@ const breadcrumbSchema = {
     imageAlt="A homeowner on the phone with Pinky's Plumbing about a leak"
   />
 
-  <section class="bg-ink-950 py-16 sm:py-24">
+  <section class="bg-mist-100 py-16 sm:py-24">
     <Container class="grid gap-10 lg:grid-cols-[1fr_1.3fr] lg:gap-16">
       <aside class="space-y-6" data-reveal="left">
-        <div class="rounded-3xl border border-pink-500/20 bg-gradient-to-br from-pink-500/15 to-transparent p-7">
-          <p class="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-300 uppercase">
+        <div class="border-pink-350/30 shadow-card rounded-3xl border bg-gradient-to-br from-pink-50 to-white p-7">
+          <p class="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-600 uppercase">
             <span class="relative flex size-2">
               <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-pink-400 opacity-75"></span>
-              <span class="relative inline-flex size-2 rounded-full bg-pink-400"></span>
+              <span class="relative inline-flex size-2 rounded-full bg-pink-500"></span>
             </span>
             Emergency? Skip the form.
           </p>
           <a
             href={`tel:${business.hotline.tel}`}
-            class="font-display mt-3 flex items-center gap-3 text-3xl font-bold text-white hover:text-pink-300"
+            class="font-display text-ink-900 mt-3 flex items-center gap-3 text-3xl font-bold hover:text-pink-600"
           >
-            <Phone className="size-7 text-pink-400" aria-hidden="true" />
+            <Phone className="size-7 text-pink-600" aria-hidden="true" />
             {business.hotline.display}
           </a>
-          <p class="mt-2 text-sm text-white/60">{business.hours}</p>
+          <p class="text-ink-500 mt-2 text-sm">{business.hours}</p>
         </div>
 
-        <div class="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-          <h2 class="font-display text-lg font-bold text-white">Call Your County Directly</h2>
+        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
+          <h2 class="font-display text-ink-900 text-lg font-bold">Call Your County Directly</h2>
           <ul class="mt-4 space-y-3">
             {
               business.counties.map((c) => (
-                <li class="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
-                  <span class="text-sm text-white/60">{c.name}</span>
-                  <a href={`tel:${c.phoneTel}`} class="font-display text-sm font-bold text-white hover:text-pink-300">
+                <li class="border-ink-100 flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                  <span class="text-ink-500 text-sm">{c.name}</span>
+                  <a href={`tel:${c.phoneTel}`} class="font-display text-ink-900 text-sm font-bold hover:text-pink-600">
                     {c.phoneDisplay}
                   </a>
                 </li>
@@ -72,29 +72,29 @@ const breadcrumbSchema = {
           </ul>
         </div>
 
-        <div class="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
+        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
           <div class="flex items-center gap-3">
-            <Clock className="size-5 text-teal-400" aria-hidden="true" />
-            <p class="text-sm text-white/80">Open 24 hours a day, 7 days a week</p>
+            <Clock className="size-5 text-teal-700" aria-hidden="true" />
+            <p class="text-ink-700 text-sm">Open 24 hours a day, 7 days a week</p>
           </div>
           <div class="mt-3 flex items-center gap-3">
-            <MapPin className="size-5 text-teal-400" aria-hidden="true" />
-            <p class="text-sm text-white/80">
+            <MapPin className="size-5 text-teal-700" aria-hidden="true" />
+            <p class="text-ink-700 text-sm">
               Serving <a
                 href="/service-area/"
-                class="underline decoration-white/30 underline-offset-2 hover:text-pink-300">Greater Seattle</a
+                class="decoration-ink-300 underline underline-offset-2 hover:text-pink-600">Greater Seattle</a
               >: King, Snohomish &amp; Pierce County
             </p>
           </div>
           <div class="mt-3 flex items-center gap-3">
-            <ShieldCheck className="size-5 text-teal-400" aria-hidden="true" />
-            <p class="text-sm text-white/80">Licensed, bonded &amp; background-checked</p>
+            <ShieldCheck className="size-5 text-teal-700" aria-hidden="true" />
+            <p class="text-ink-700 text-sm">Licensed, bonded &amp; background-checked</p>
           </div>
         </div>
 
-        <div class="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-          <h2 class="font-display text-lg font-bold text-white">Mailing Address</h2>
-          <p class="mt-3 text-sm leading-relaxed text-white/70">
+        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
+          <h2 class="font-display text-ink-900 text-lg font-bold">Mailing Address</h2>
+          <p class="text-ink-600 mt-3 text-sm leading-relaxed">
             {business.legalName}<br />
             {business.streetAddress}<br />
             {business.addressLocality}, {business.addressRegion}
@@ -103,15 +103,15 @@ const breadcrumbSchema = {
         </div>
       </aside>
 
-      <div class="rounded-3xl border border-white/10 bg-white/[0.02] p-6 sm:p-9" data-reveal="right">
+      <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-6 sm:p-9" data-reveal="right">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 class="font-display text-2xl font-bold text-white">Request a Free Estimate</h2>
-            <p class="mt-2 text-sm text-white/55">No obligation. We'll follow up within one business day.</p>
+            <h2 class="font-display text-ink-900 text-2xl font-bold">Request a Free Estimate</h2>
+            <p class="text-ink-500 mt-2 text-sm">No obligation. We'll follow up within one business day.</p>
           </div>
-          <div class="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2">
+          <div class="border-ink-200 bg-ink-50 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2">
             <StarRating rating={avgRating} size="sm" />
-            <span class="font-display text-xs font-bold text-white/80">5-Star Rated</span>
+            <span class="font-display text-ink-700 text-xs font-bold">5-Star Rated</span>
           </div>
         </div>
         <div class="mt-8">
@@ -121,7 +121,7 @@ const breadcrumbSchema = {
     </Container>
   </section>
 
-  <section id="reviews" class="overflow-x-clip bg-teal-950 py-20 sm:py-28">
+  <section id="reviews" class="overflow-x-clip bg-teal-900 py-20 sm:py-28">
     <Container>
       <SectionHeading
         eyebrow="5-Star Rated Plumbers"

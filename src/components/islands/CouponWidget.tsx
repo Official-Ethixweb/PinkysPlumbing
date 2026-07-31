@@ -147,17 +147,17 @@ export default function CouponWidget() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -24, opacity: 0 }}
             transition={{ duration: 0.4, ease: EASE }}
-            className="border-ink-900 bg-ink-950/98 fixed top-1/2 left-12 z-40 flex max-h-[min(600px,calc(100dvh-160px))] w-[calc(100vw-3rem)] max-w-[400px] -translate-y-1/2 flex-col overflow-hidden rounded-r-3xl border border-l-0 border-white/10 shadow-2xl shadow-black/50 backdrop-blur-xl"
+            className="border-ink-100 fixed top-1/2 left-12 z-40 flex max-h-[min(600px,calc(100dvh-160px))] w-[calc(100vw-3rem)] max-w-[400px] -translate-y-1/2 flex-col overflow-hidden rounded-r-3xl border border-l-0 bg-white shadow-2xl shadow-black/15"
           >
-            <div className="shrink-0 border-b border-white/10 bg-gradient-to-br from-pink-600/20 to-transparent px-6 py-5">
-              <p className="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-300 uppercase">
+            <div className="border-ink-100 shrink-0 border-b bg-gradient-to-br from-pink-50 to-transparent px-6 py-5">
+              <p className="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-600 uppercase">
                 <Sparkles className="size-3.5" aria-hidden="true" />
                 Current Offers
               </p>
               <h2
                 ref={headingRef}
                 tabIndex={-1}
-                className="font-display mt-1.5 text-xl font-bold text-balance text-white outline-none"
+                className="font-display text-ink-900 mt-1.5 text-xl font-bold text-balance outline-none"
               >
                 {coupons.length} Ways to Save
               </h2>
@@ -169,29 +169,29 @@ export default function CouponWidget() {
                 return (
                   <div
                     key={coupon.code}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]"
+                    className="border-ink-100 shadow-card hover:bg-ink-50 rounded-2xl border bg-white p-4 transition-colors"
                   >
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/25 ring-inset">
                         <Icon className="size-4" aria-hidden="true" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="font-display text-sm font-bold text-white">{coupon.title}</p>
-                        <p className="text-gold-400 mt-1 text-[15px] leading-snug font-semibold text-balance">
+                        <p className="font-display text-ink-900 text-sm font-bold">{coupon.title}</p>
+                        <p className="mt-1 text-[15px] leading-snug font-semibold text-balance text-amber-700">
                           {coupon.offer}
                         </p>
-                        <p className="mt-2 text-[11px] leading-relaxed text-white/45">{coupon.terms}</p>
+                        <p className="text-ink-500 mt-2 text-[11px] leading-relaxed">{coupon.terms}</p>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
-                      <span className="font-display rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/60">
+                      <span className="font-display border-ink-200 text-ink-500 rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wide">
                         CODE {coupon.code}
                       </span>
                       <button
                         type="button"
                         onClick={() => printCoupon(coupon)}
                         aria-label={`Print ${coupon.title} coupon`}
-                        className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                        className="text-ink-500 hover:bg-ink-100 hover:text-ink-900 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
                       >
                         <Printer className="size-3.5" aria-hidden="true" />
                         Print
@@ -202,7 +202,7 @@ export default function CouponWidget() {
               })}
             </div>
 
-            <div className="shrink-0 space-y-2.5 border-t border-white/10 bg-white/[0.02] p-4">
+            <div className="border-ink-100 shrink-0 space-y-2.5 border-t bg-mist-100 p-4">
               <a
                 href={`tel:${business.hotline.tel}`}
                 className="font-display flex w-full items-center justify-center gap-2 rounded-full bg-pink-600 px-5 py-3 text-sm font-bold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.25)_inset] transition-colors hover:bg-pink-500"
@@ -212,7 +212,7 @@ export default function CouponWidget() {
               </a>
               <a
                 href="/contact-us/"
-                className="flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-semibold text-white/60 transition-colors hover:text-white"
+                className="text-ink-500 hover:text-ink-900 flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-semibold transition-colors"
               >
                 Get a Free Estimate Instead
                 <ArrowRight className="size-3.5" aria-hidden="true" />

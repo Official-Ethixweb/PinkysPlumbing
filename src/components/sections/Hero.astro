@@ -53,8 +53,19 @@ const badges = [
       loading="eager"
       fetchpriority="high"
     />
-    <div class="absolute inset-0 bg-gradient-to-r from-white via-white/15 to-transparent"></div>
-    <div class="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent"></div>
+    <!-- Seam blend only: a fixed-width strip (not a % of the lane, so it
+         reads the same width on every screen size) with many soft stops
+         instead of a hard 2-stop fade — an eased opacity curve rather than
+         a linear one, so it reads as a gentle emergence, not an edge. Clears
+         to fully transparent well before the lane's midpoint, so the truck
+         and wordmark stay crisp and untinted. No bottom wash — nothing
+         needs legibility help here since the headline never sits over the
+         photo. -->
+    <div
+      class="pointer-events-none absolute inset-y-0 left-0"
+      style="width: clamp(250px, 30vw, 400px); background: linear-gradient(to right, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.94) 10%, rgba(255,255,255,0.8) 22%, rgba(255,255,255,0.58) 38%, rgba(255,255,255,0.36) 54%, rgba(255,255,255,0.18) 70%, rgba(255,255,255,0.07) 85%, rgba(255,255,255,0) 100%);"
+    >
+    </div>
   </div>
 
   <Container
