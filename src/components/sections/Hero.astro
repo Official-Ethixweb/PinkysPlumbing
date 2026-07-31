@@ -26,14 +26,35 @@ const badges = [
 ---
 
 <section class="relative overflow-hidden bg-white">
-  <!-- Base wash: spans the full section so the tint fades continuously the
-       whole way to the photo seam. Without this, the blur blob below fades
-       out around x≈600-700px but the photo lane doesn't start until
-       x≈918px (48% of the viewport) - that gap rendered as flat, uniform
-       white bordered by a gradient on one side and the photo on the other,
-       which read as a visible solid block/layer rather than open space. -->
+  <!--
+    Root cause of the recurring "hard wall" (traced from scratch, not
+    re-tuned): this used to be TWO independently-parameterized gradients -
+    a full-section wash (0%-100%, Tailwind's default via-stop at 50%) and a
+    separate strip drawn inside the photo box, positioned starting at
+    section x≈48%. By the time the wash reached x≈48% it had already faded
+    to ~5% opacity - but the photo-box strip started its OWN curve fresh at
+    that same x, opening at 50% opacity. That's a jump from ~5% to ~50%
+    happening at one exact x-coordinate: a real discontinuity, not a
+    perception issue, and no amount of softening either curve individually
+    could fix it, because the problem was the seam BETWEEN them. Stacked on
+    top of that, the photo itself sat in a hard-edged rectangular box, so
+    the underlying content (page bg -> photo pixels) also flipped at that
+    same exact x. Two structural edges on the same line, unavoidably
+    visible regardless of opacity values.
+
+    Fix: one continuous gradient for the whole section (mathematically
+    impossible to have a seam, since there's only one function now), and
+    the photo is feathered with a CSS mask instead of a white overlay - a
+    mask fades the photo's own pixel visibility to nothing, so the page
+    background shows through directly with nothing painted on top. An
+    overlay approach can only ever look like "veiled/washed photo"; a mask
+    looks like the photo dissolving into the page, which is the actual
+    "one continuous composition" look being asked for. The photo box is
+    also widened (52% -> 60%) so the feather has real room to be gradual
+    instead of packed into a ~200px strip.
+  -->
   <div
-    class="from-pink-350/14 via-pink-350/5 pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent"
+    class="from-pink-350/22 via-pink-350/6 pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent"
     aria-hidden="true"
   >
   </div>
@@ -49,36 +70,27 @@ const badges = [
   >
   </div>
 
-  <!-- background photo: confined to the right lane on large screens only,
-       so it can never sit behind the headline (the truck itself is
-       covered in the same brand wordmark, which read as a duplicate/
-       collision when full-bleed under the text). -->
-  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[52%] lg:block">
+  <!-- background photo: kept out of the text column (not full-bleed) on
+       purpose - the truck itself is painted with the same "Pinky's
+       Plumbing" wordmark as the headline, and letting it run full-width
+       under the text reads as a duplicate/collision. Widened from the
+       original 52% to 60% purely to give the mask feather (below) more
+       room to be gradual. object-position nudged from 62% to 67% to keep
+       the truck framed the same way visually now that the box is wider. -->
+  <div
+    class="pointer-events-none absolute inset-y-0 right-0 hidden w-[60%] lg:block"
+    style="mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.06) 10%, rgba(0,0,0,0.22) 22%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.78) 46%, black 60%, black 100%); -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.06) 10%, rgba(0,0,0,0.22) 22%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.78) 46%, black 60%, black 100%);"
+  >
     <Image
       src={heroTruck}
       alt="Pinky's Plumbing service truck parked on the Seattle waterfront"
       widths={[960, 1400, 2000]}
-      sizes="52vw"
+      sizes="60vw"
       quality="high"
-      class="h-full w-full object-cover object-[62%_center]"
+      class="h-full w-full object-cover object-[67%_center]"
       loading="eager"
       fetchpriority="high"
     />
-    <!-- Seam blend only. Two things were wrong before: the band was up to
-         400px wide (30% of the lane) and opened at ~98% opacity, so the
-         first ~100px read as a flat opaque wall before it ever started
-         tapering. This version never goes above ~50% opacity even at the
-         seam (the photo shows through immediately, no "wall"), the band is
-         narrowed to a max of ~220px (hugs the left edge, most of the truck
-         stays fully untinted), and the curve front-loads its falloff — it's
-         already down to ~10% opacity by the band's midpoint instead of
-         holding high through it — so the decrease reads as gradual rather
-         than a visible edge. -->
-    <div
-      class="pointer-events-none absolute inset-y-0 left-0"
-      style="width: clamp(120px, 16vw, 220px); background: linear-gradient(to right, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.38) 12%, rgba(255,255,255,0.26) 26%, rgba(255,255,255,0.16) 42%, rgba(255,255,255,0.09) 58%, rgba(255,255,255,0.04) 75%, rgba(255,255,255,0) 100%);"
-    >
-    </div>
   </div>
 
   <Container
