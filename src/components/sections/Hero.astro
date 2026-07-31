@@ -53,7 +53,7 @@ const badges = [
     <img
       src="/hero-skyline-loop.webp"
       alt=""
-      class="h-full w-full object-cover opacity-30"
+      class="h-full w-full object-cover opacity-15"
       loading="eager"
       decoding="async"
     />
@@ -71,25 +71,26 @@ const badges = [
   <!-- background photo: kept out of the text column (not full-bleed) on
        purpose - the truck itself is painted with the same "Pinky's
        Plumbing" wordmark as the headline, and letting it run full-width
-       under the text reads as a duplicate/collision. object-position at
-       67% keeps the truck framed with the logo clear of the text side.
+       under the text reads as a duplicate/collision.
 
-       No feather/mask at all now. Any gradual opacity ramp - no matter how
-       narrow - blends photo pixels with the plain white page background in
-       that zone, and a photo-blended-with-white patch reads as exactly the
-       "white haze/layer" that kept getting flagged, regardless of how few
-       px wide it was. A clean hard edge has zero blended pixels: it's
-       either full-color photo or plain white background, nothing in
-       between. This is a legitimate, common pattern (split-panel hero),
-       not a fallback - confident and crisp beats a smudged transition. -->
-  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[60%] lg:block">
+       No feather/mask at all - a clean hard edge has zero blended pixels
+       (either full-color photo or plain white background, nothing in
+       between), which is what "no white layer" actually requires.
+
+       Box width/crop restored to 52% + object-[62%_center]: those had been
+       widened to 60%/67% purely to give the (now-removed) mask more room
+       to fade. With no mask left to justify it, the wider box just pulled
+       more of the cab into frame - including the driver's face sitting
+       right at the seam, cut awkwardly in half - which is what read as
+       "odd." Reverting closes that box back down over the cab. -->
+  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[52%] lg:block">
     <Image
       src={heroTruck}
       alt="Pinky's Plumbing service truck parked on the Seattle waterfront"
       widths={[960, 1400, 2000]}
-      sizes="60vw"
+      sizes="52vw"
       quality="high"
-      class="h-full w-full object-cover object-[67%_center]"
+      class="h-full w-full object-cover object-[62%_center]"
       loading="eager"
       fetchpriority="high"
     />
@@ -156,7 +157,12 @@ const badges = [
         promise to treat your home like our own.
       </p>
 
-      <div class="mt-9 flex flex-col gap-3.5 sm:flex-row sm:items-center">
+      <!-- hidden below lg: StickyCallBar (mobile/tablet only, see
+           layout/StickyCallBar.astro) already pins Call Now / Get Estimate
+           to the bottom of the screen there, so a second pair of the same
+           two actions right here was pure redundancy. Desktop has no
+           sticky bar equivalent, so these stay for lg+. -->
+      <div class="mt-9 hidden gap-3.5 lg:flex lg:items-center">
         <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible>
           Get a Free Estimate
           <ArrowRight className="size-4" aria-hidden="true" />
