@@ -1,0 +1,58 @@
+---
+import Eyebrow from './Eyebrow.astro';
+import RotatingText from '../islands/RotatingText.tsx';
+import { cn } from '../../lib/utils';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  align?: 'left' | 'center';
+  tone?: 'light' | 'dark';
+  class?: string;
+}
+
+const { eyebrow, title, description, align = 'center', tone = 'light', class: className } = Astro.props;
+---
+
+<div
+  class={cn(
+    'flex flex-col gap-4',
+    align === 'center' ? 'items-center text-center' : 'items-start text-left',
+    className
+  )}
+  data-reveal
+>
+  {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+  <h2
+    class={cn(
+      'text-balance font-display text-4xl leading-[1.02] font-extrabold tracking-[-0.025em] sm:text-5xl md:text-[3.25rem]',
+      tone === 'light' ? 'text-ink-900' : 'text-white'
+    )}
+  >
+    <RotatingText
+      client:visible
+      texts={[title]}
+      auto={false}
+      animatePresenceInitial={true}
+      splitBy="words"
+      staggerDuration={0.04}
+      staggerFrom="first"
+      transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+      splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+      mainClassName={align === 'center' ? 'justify-center' : undefined}
+    />
+  </h2>
+  {
+    description && (
+      <p
+        class={cn(
+          'max-w-2xl text-base leading-relaxed text-balance sm:text-lg',
+          tone === 'light' ? 'text-ink-500' : 'text-white/70'
+        )}
+      >
+        {description}
+      </p>
+    )
+  }
+</div>

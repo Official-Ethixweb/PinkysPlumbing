@@ -1,0 +1,63 @@
+---
+import {
+  ArrowUpRight,
+  Siren,
+  Flame,
+  Droplets,
+  Wrench,
+  Toilet,
+  Shovel,
+  Fuel,
+  ThermometerSun,
+  type LucideIcon
+} from 'lucide-react';
+import Container from '../ui/Container.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+import IconBadge from '../ui/IconBadge.astro';
+import Button from '../ui/Button.astro';
+import Reveal from '../shared/Reveal.astro';
+import { services } from '../../data/services';
+
+const iconMap: Record<string, LucideIcon> = { Siren, Flame, Droplets, Wrench, Toilet, Shovel, Fuel, ThermometerSun };
+---
+
+<section class="bg-white py-20 sm:py-28">
+  <Container>
+    <SectionHeading
+      eyebrow="Residential & Commercial Plumbing"
+      title="Our Services"
+      description="From a dripping faucet to a full sewer replacement. No job is too small or too big."
+    />
+
+    <Reveal as="div" class="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" step={70}>
+      {
+        services.map((s) => {
+          const Icon = iconMap[s.icon];
+          return (
+            <a
+              href={`/services/${s.slug}/`}
+              data-reveal
+              class="card-elevated group hover:border-pink-350/50 relative flex flex-col gap-4 p-6"
+            >
+              <div class="flex items-start justify-between">
+                <IconBadge icon={Icon} tone="pink" />
+                <ArrowUpRight
+                  className="size-5 text-ink-300 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-pink-600"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <h3 class="font-display text-ink-900 text-lg font-bold">{s.title}</h3>
+                <p class="text-ink-500 mt-1.5 text-sm leading-relaxed">{s.short}</p>
+              </div>
+            </a>
+          );
+        })
+      }
+    </Reveal>
+
+    <div class="mt-12 flex justify-center" data-reveal>
+      <Button href="/services/" variant="outline" size="lg">View All Services</Button>
+    </div>
+  </Container>
+</section>

@@ -1,0 +1,226 @@
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  Tag,
+  X,
+  Phone,
+  Printer,
+  ArrowRight,
+  Flame,
+  Droplets,
+  Shovel,
+  Wrench,
+  ThermometerSun,
+  Sparkles,
+  type LucideIcon
+} from 'lucide-react';
+import { coupons, type Coupon } from '../../data/coupons';
+import { business } from '../../data/business';
+
+const iconMap: Record<Coupon['icon'], LucideIcon> = { Flame, Droplets, Shovel, Wrench, ThermometerSun, Sparkles };
+
+const STORAGE_KEY = 'pinkys-coupon-widget-open';
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+function printCoupon(coupon: Coupon) {
+  const win = window.open('', '_blank', 'width=480,height=640');
+  if (!win) return;
+  const doc = win.document;
+  doc.title = `${coupon.title} — Pinky's Plumbing Coupon`;
+  const style = doc.createElement('style');
+  style.textContent = `
+    body{font-family:system-ui,sans-serif;padding:32px;color:#0b0d10;}
+    .card{border:3px dashed #d10e72;border-radius:24px;padding:32px;max-width:420px;margin:0 auto;text-align:center;}
+    .brand{font-weight:800;font-size:18px;margin-bottom:24px;}
+    .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#d10e72;margin:0 0 8px;font-weight:700;}
+    h1{font-size:24px;margin:0 0 16px;}
+    .offer{font-size:19px;font-weight:700;margin:0 0 18px;}
+    .code{display:inline-block;border:2px solid #0b0d10;border-radius:999px;padding:6px 18px;font-weight:700;letter-spacing:.08em;margin-bottom:18px;}
+    .terms{font-size:12px;color:#555;margin:14px 0 0;line-height:1.5;}
+  `;
+  doc.head.appendChild(style);
+  const card = doc.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="brand">Pinky's Plumbing</div>
+    <p class="kicker">Coupon</p>
+    <h1>${coupon.title}</h1>
+    <p class="offer">${coupon.offer}</p>
+    <div class="code">CODE: ${coupon.code}</div>
+    <p class="terms">${coupon.terms}</p>
+    <p class="terms">Call ${business.hotline.display} to redeem.</p>
+  `;
+  doc.body.appendChild(card);
+  win.focus();
+  win.print();
+}
+
+export default function CouponWidget() {
+  const [open, setOpen] = useState(false);
+  const hydrated = useRef(false);
+  const tabRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored === '1') setOpen(true);
+    hydrated.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    sessionStorage.setItem(STORAGE_KEY, open ? '1' : '0');
+    if (open) headingRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        tabRef.current?.focus();
+      }
+    };
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (panelRef.current?.contains(target) || tabRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onClick);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-[39] bg-black/50 backdrop-blur-[2px] lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
+      <button
+        ref={tabRef}
+        type="button"
+        aria-expanded={open}
+        aria-controls="coupon-panel"
+        onClick={() => setOpen((v) => !v)}
+        className={`shadow-glow-pink fixed top-1/2 left-0 z-40 flex w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl border border-l-0 border-white/15 bg-gradient-to-b from-pink-500 to-pink-700 py-5 text-white transition-[width,padding] duration-300 hover:w-14 ${open ? '' : 'animate-float'}`}
+      >
+        {open ? (
+          <X className="size-4 shrink-0" aria-hidden="true" />
+        ) : (
+          <Tag className="size-4 shrink-0" aria-hidden="true" />
+        )}
+        <span
+          className="font-display text-[11px] font-bold tracking-wider uppercase [writing-mode:vertical-rl]"
+          style={{ transform: 'rotate(180deg)' }}
+        >
+          {open ? 'Close' : 'Coupons'}
+        </span>
+        {!open && (
+          <span className="font-display flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold">
+            {coupons.length}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            ref={panelRef}
+            id="coupon-panel"
+            role="dialog"
+            aria-label="Current coupons and offers"
+            initial={{ x: -24, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -24, opacity: 0 }}
+            transition={{ duration: 0.4, ease: EASE }}
+            className="border-ink-900 bg-ink-950/98 fixed top-1/2 left-12 z-40 flex max-h-[min(600px,calc(100dvh-160px))] w-[calc(100vw-3rem)] max-w-[400px] -translate-y-1/2 flex-col overflow-hidden rounded-r-3xl border border-l-0 border-white/10 shadow-2xl shadow-black/50 backdrop-blur-xl"
+          >
+            <div className="shrink-0 border-b border-white/10 bg-gradient-to-br from-pink-600/20 to-transparent px-6 py-5">
+              <p className="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-300 uppercase">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                Current Offers
+              </p>
+              <h2
+                ref={headingRef}
+                tabIndex={-1}
+                className="font-display mt-1.5 text-xl font-bold text-balance text-white outline-none"
+              >
+                {coupons.length} Ways to Save
+              </h2>
+            </div>
+
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+              {coupons.map((coupon) => {
+                const Icon = iconMap[coupon.icon];
+                return (
+                  <div
+                    key={coupon.code}
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-pink-500/15 text-pink-400 ring-1 ring-pink-500/25 ring-inset">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-display text-sm font-bold text-white">{coupon.title}</p>
+                        <p className="text-gold-400 mt-1 text-[15px] leading-snug font-semibold text-balance">
+                          {coupon.offer}
+                        </p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-white/45">{coupon.terms}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <span className="font-display rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/60">
+                        CODE {coupon.code}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => printCoupon(coupon)}
+                        aria-label={`Print ${coupon.title} coupon`}
+                        className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                      >
+                        <Printer className="size-3.5" aria-hidden="true" />
+                        Print
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="shrink-0 space-y-2.5 border-t border-white/10 bg-white/[0.02] p-4">
+              <a
+                href={`tel:${business.hotline.tel}`}
+                className="font-display flex w-full items-center justify-center gap-2 rounded-full bg-pink-600 px-5 py-3 text-sm font-bold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.25)_inset] transition-colors hover:bg-pink-500"
+              >
+                <Phone className="size-4" aria-hidden="true" />
+                Call to Redeem: {business.hotline.display}
+              </a>
+              <a
+                href="/contact-us/"
+                className="flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-semibold text-white/60 transition-colors hover:text-white"
+              >
+                Get a Free Estimate Instead
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}

@@ -1,17 +1,58 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/sections/Hero.astro';
+import Reviews from '../components/sections/Reviews.astro';
+import FinancingBanner from '../components/sections/FinancingBanner.astro';
+import ServicesGrid from '../components/sections/ServicesGrid.astro';
+import WhyChooseUs from '../components/sections/WhyChooseUs.astro';
+import PromiseBanner from '../components/sections/PromiseBanner.astro';
+import SplitFeature from '../components/sections/SplitFeature.astro';
+import TeamBand from '../components/sections/TeamBand.astro';
+import FAQ from '../components/sections/FAQ.astro';
+import clientHandshake from '../assets/images/client-handshake.webp';
+import emergencyHelp from '../assets/images/emergency-call-help.webp';
+import { generalFaq } from '../data/faq';
 
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: generalFaq.map((f) => ({
+    '@type': 'Question',
+    name: f.question,
+    acceptedAnswer: { '@type': 'Answer', text: f.answer }
+  }))
+};
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout
+  title="Pinky's Plumbing | 24-Hour Seattle Plumbers | King, Snohomish & Pierce County"
+  description="Pinky's Plumbing is Seattle's 24-hour residential & commercial plumber. Licensed, background-checked technicians, honest pricing, and financing available. Call now."
+  schema={[faqSchema]}
+>
+  <Hero />
+  <Reviews />
+  <FinancingBanner />
+  <ServicesGrid />
+  <WhyChooseUs />
+  <PromiseBanner />
+  <SplitFeature
+    eyebrow="Repair, Service, or Installation"
+    title="No Job Is Too Small or Too Big"
+    body="From replacing a faucet or toilet valve to a full plumbing renovation, we have the experience and equipment to complete any job without issue, for your home or your business."
+    image={clientHandshake}
+    imageAlt="A Pinky's Plumbing technician shaking hands with a satisfied homeowner"
+    cta={{ label: 'Contact Us', href: '/contact-us/' }}
+  />
+  <SplitFeature
+    eyebrow="Let Us Make Your Headache Disappear"
+    title="One Call Does It All"
+    body="When your home or business needs urgent plumbing repair or replacement, you don't have to drive anywhere. Call and get your repair handled right away, from a torn bathtub wall to a leaking roof valve."
+    image={emergencyHelp}
+    imageAlt="A homeowner calling Pinky's Plumbing for help with a leaking sink"
+    reverse
+    tone="teal"
+    cta={{ label: 'Request Service', href: '/contact-us/', showPhone: true }}
+  />
+  <TeamBand />
+  <FAQ items={generalFaq} />
+</BaseLayout>

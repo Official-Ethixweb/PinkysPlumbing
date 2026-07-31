@@ -1,0 +1,19 @@
+---
+import Container from '../ui/Container.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+import TestimonialsMarquee from './TestimonialsMarquee.astro';
+---
+
+<section id="reviews" class="scroll-mt-28 overflow-x-clip bg-teal-900 py-20 sm:py-28">
+  <Container>
+    <SectionHeading
+      eyebrow="5-Star Rated Plumbers"
+      title="Customer Satisfaction Is Our Top Priority"
+      description="We don't just fix pipes. We show up on time, explain what's wrong, and clean up after ourselves. Here's what Seattle homeowners say."
+      tone="dark"
+    />
+  </Container>
+  <div class="mt-14" data-reveal style="--reveal-delay:100ms">
+    <TestimonialsMarquee />
+  </div>
+</section>

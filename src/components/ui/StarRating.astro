@@ -1,0 +1,24 @@
+---
+import { Star } from 'lucide-react';
+import { cn } from '../../lib/utils';
+
+interface Props {
+  rating?: number;
+  class?: string;
+  size?: 'sm' | 'md';
+}
+
+const { rating = 5, class: className, size = 'sm' } = Astro.props;
+const dim = size === 'sm' ? 'size-4' : 'size-5';
+---
+
+<div class={cn('flex items-center gap-0.5', className)} role="img" aria-label={`${rating} out of 5 stars`}>
+  {
+    Array.from({ length: 5 }).map((_, i) => (
+      <Star
+        className={cn(dim, i < rating ? 'fill-gold-400 text-gold-400' : 'text-ink-300 fill-transparent')}
+        aria-hidden="true"
+      />
+    ))
+  }
+</div>

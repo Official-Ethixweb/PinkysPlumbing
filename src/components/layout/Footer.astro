@@ -1,0 +1,190 @@
+---
+import { Phone, MapPin, Clock, ArrowRight } from 'lucide-react';
+import Container from '../ui/Container.astro';
+import Button from '../ui/Button.astro';
+import SpecularButton from '../islands/SpecularButton.tsx';
+import SocialIcon from '../ui/SocialIcon.astro';
+import RotatingText from '../islands/RotatingText.tsx';
+import { business, serviceAreas } from '../../data/business';
+import { services } from '../../data/services';
+import { cityPages } from '../../data/cityPages';
+
+const featuredSlugs = new Map(cityPages.map((c) => [c.name, c.slug]));
+import logo from '../../assets/images/logo-full.webp';
+import { Image } from 'astro:assets';
+import { specularPink } from '../../lib/specularPresets';
+
+const year = new Date().getFullYear();
+const companyLinks = [
+  { label: 'About Us', href: '/about-us/' },
+  { label: 'Our Services', href: '/services/' },
+  { label: 'Service Area', href: '/service-area/' },
+  { label: 'Customer Reviews', href: '/#reviews' },
+  { label: 'Contact Us', href: '/contact-us/' },
+  { label: 'Privacy Policy', href: '/privacy-policy/' }
+];
+---
+
+<footer class="bg-teal-900 text-white/60">
+  <!-- Closing CTA -->
+  <div class="border-b border-white/10 bg-gradient-to-br from-teal-950 via-teal-900 to-teal-950">
+    <Container class="flex flex-col items-center gap-6 py-14 text-center sm:py-16">
+      <h2 class="font-display text-3xl font-bold text-balance text-white sm:text-4xl">
+        <RotatingText
+          client:visible
+          texts={["One call does it all. Let's fix it today."]}
+          auto={false}
+          animatePresenceInitial={true}
+          splitBy="words"
+          staggerDuration={0.03}
+          staggerFrom="first"
+          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
+          mainClassName="justify-center"
+        />
+      </h2>
+      <p class="max-w-xl text-balance text-white/85">
+        Licensed, background-checked technicians on call 24/7 across King, Snohomish &amp; Pierce County.
+      </p>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible>
+          Get a Free Estimate
+        </SpecularButton>
+        <Button
+          href={`tel:${business.hotline.tel}`}
+          variant="ghost"
+          size="lg"
+          class="border-2 border-white/40 text-white hover:bg-white/10"
+        >
+          Call {business.hotline.display}
+        </Button>
+      </div>
+    </Container>
+  </div>
+
+  <Container class="grid grid-cols-2 gap-x-8 gap-y-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.1fr]">
+    <div class="col-span-2 lg:col-span-1">
+      <a href="/" aria-label={`${business.name} - Home`}>
+        <Image
+          src={logo}
+          alt={business.name}
+          width={200}
+          height={40}
+          densities={[1, 2]}
+          quality="max"
+          class="h-9 w-auto"
+        />
+      </a>
+      <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
+        Seattle's 24-hour residential &amp; commercial plumbers. Honest pricing, licensed technicians, and a promise to
+        treat your home like our own.
+      </p>
+      <div class="mt-5 flex items-center gap-2.5">
+        <SocialIcon network="facebook" href={business.social.facebook} />
+        <SocialIcon network="twitter" href={business.social.twitter} />
+        <SocialIcon network="youtube" href={business.social.youtube} />
+      </div>
+    </div>
+
+    <div>
+      <h3 class="font-display text-sm font-bold tracking-wider text-white uppercase">Services</h3>
+      <ul class="mt-4 space-y-2.5">
+        {
+          services.map((s) => (
+            <li>
+              <a href={`/services/${s.slug}/`} class="text-sm text-white/60 transition-colors hover:text-pink-400">
+                {s.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="font-display text-sm font-bold tracking-wider text-white uppercase">Company</h3>
+      <ul class="mt-4 space-y-2.5">
+        {
+          companyLinks.map((link) => (
+            <li>
+              <a href={link.href} class="text-sm text-white/60 transition-colors hover:text-pink-400">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="col-span-2 sm:col-span-1">
+      <h3 class="font-display text-sm font-bold tracking-wider text-white uppercase">Talk to a Plumber</h3>
+      <ul class="mt-4 space-y-3">
+        {
+          business.counties.map((c) => (
+            <li class="flex items-center justify-between gap-3 text-sm">
+              <span class="text-white/60">{c.name}</span>
+              <a
+                href={`tel:${c.phoneTel}`}
+                class="flex items-center gap-1.5 font-semibold text-white hover:text-pink-400"
+              >
+                <Phone className="size-3.5 text-pink-400" aria-hidden="true" />
+                {c.phoneDisplay}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-4 flex items-center gap-1.5 text-sm text-white/60">
+        <Clock className="size-3.5 text-pink-400" aria-hidden="true" />
+        {business.hours}
+      </p>
+      <p class="mt-1.5 flex items-center gap-1.5 text-sm text-white/60">
+        <MapPin className="size-3.5 text-pink-400" aria-hidden="true" />
+        Serving Greater Seattle, WA
+      </p>
+    </div>
+  </Container>
+
+  <!-- Service area -->
+  <div class="border-t border-white/5 py-10">
+    <Container>
+      <p class="font-display text-center text-sm font-bold tracking-wider text-white/70 uppercase">
+        Proudly Serving the Greater Seattle Area
+      </p>
+      <ul class="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-x-5 gap-y-2.5">
+        {
+          serviceAreas.map((city) => {
+            const slug = featuredSlugs.get(city);
+            return (
+              <li class="text-xs text-white/60">
+                <a
+                  href={slug ? `/service-area/${slug}/` : '/service-area/'}
+                  class="transition-colors hover:text-pink-400"
+                >
+                  {city}
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+      <div class="mt-5 flex justify-center">
+        <a
+          href="/service-area/"
+          class="inline-flex items-center gap-1 text-xs font-semibold text-pink-400 hover:text-pink-300"
+        >
+          View full service area <ArrowRight className="size-3.5" aria-hidden="true" />
+        </a>
+      </div>
+    </Container>
+  </div>
+
+  <div class="border-t border-white/5 py-6">
+    <Container
+      class="flex flex-col items-center gap-2 text-center text-xs text-white/60 sm:flex-row sm:justify-between sm:text-left"
+    >
+      <p>&copy; {year} {business.legalName}. All rights reserved.</p>
+      <p>WA License #{business.license.wa} &nbsp;·&nbsp; TX License {business.license.tx}</p>
+    </Container>
+  </div>
+</footer>

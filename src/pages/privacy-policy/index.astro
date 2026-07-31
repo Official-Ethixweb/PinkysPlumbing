@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Container from '../../components/ui/Container.astro';
+import { business } from '../../data/business';
+
+const lastUpdated = 'July 31, 2026';
+---
+
+<BaseLayout
+  title={`Privacy Policy | ${business.name}`}
+  description={`How ${business.name} collects, uses, and protects your information.`}
+  noIndex={false}
+>
+  <section class="bg-ink-950 py-20 sm:py-28">
+    <Container class="mx-auto max-w-3xl">
+      <p class="font-display text-xs font-bold tracking-wider text-pink-400 uppercase">Legal</p>
+      <h1 class="font-display mt-3 text-4xl font-bold text-white">Privacy Policy</h1>
+      <p class="mt-2 text-sm text-white/50">Last updated: {lastUpdated}</p>
+
+      <div class="prose-invert mt-10 space-y-8 text-[15px] leading-relaxed text-white/75">
+        <p>
+          This Privacy Policy describes how {business.legalName} ("Pinky's," "we," "us," or "our") collects, uses, and protects
+          information when you visit {business.url} or request service from us. This is a general-purpose policy template
+          and should be reviewed by qualified legal counsel before relying on it as a final, compliant policy.
+        </p>
+
+        <div>
+          <h2 class="font-display text-xl font-bold text-white">Information We Collect</h2>
+          <p class="mt-3">
+            When you request an estimate, fill out our contact form, or call our office, we may collect your name, phone
+            number, email address, service address, and details about the plumbing issue you're contacting us about. Our
+            website may also automatically collect standard technical information such as your IP address, browser type,
+            and pages visited, typically through analytics tools.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="font-display text-xl font-bold text-white">How We Use Your Information</h2>
+          <ul class="mt-3 list-disc space-y-2 pl-5">
+            <li>To respond to service requests, estimates, and inquiries</li>
+            <li>To schedule and dispatch technicians</li>
+            <li>To send appointment confirmations or follow-up communications</li>
+            <li>To improve our website and services</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="font-display text-xl font-bold text-white">Cookies &amp; Analytics</h2>
+          <p class="mt-3">
+            Our website may use cookies or similar technologies to understand how visitors use our site and to improve
+            performance. You can disable cookies in your browser settings; some site features may not function as
+            intended if you do.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="font-display text-xl font-bold text-white">How We Share Information</h2>
+          <p class="mt-3">
+            We do not sell your personal information. We may share information with service providers who help us
+            operate our business (such as scheduling or payment platforms), or when required by law.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="font-display text-xl font-bold text-white">Your Choices</h2>
+          <p class="mt-3">
+            You may contact us at any time to ask what information we have on file, request a correction, or ask that we
+            delete it, subject to any recordkeeping we're required to retain for business or legal reasons.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="font-display text-xl font-bold text-white">Contact Us</h2>
+          <p class="mt-3">
+            Questions about this policy can be sent to{' '}
+            <a href={`mailto:${business.email}`} class="text-pink-400 underline underline-offset-2 hover:text-pink-300">
+              {business.email}
+            </a>{' '}
+            or by calling {business.hotline.display}.
+          </p>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

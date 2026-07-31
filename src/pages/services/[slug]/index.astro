@@ -1,0 +1,166 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHero from '../../../components/sections/PageHero.astro';
+import Container from '../../../components/ui/Container.astro';
+import Button from '../../../components/ui/Button.astro';
+import SpecularButton from '../../../components/islands/SpecularButton.tsx';
+import IconBadge from '../../../components/ui/IconBadge.astro';
+import Eyebrow from '../../../components/ui/Eyebrow.astro';
+import {
+  CircleCheck,
+  Phone,
+  ArrowRight,
+  Siren,
+  Flame,
+  Droplets,
+  Wrench,
+  Toilet,
+  Shovel,
+  Fuel,
+  ThermometerSun,
+  type LucideIcon
+} from 'lucide-react';
+import { services } from '../../../data/services';
+import { business } from '../../../data/business';
+import { specularPink } from '../../../lib/specularPresets';
+
+export function getStaticPaths() {
+  return services.map((service) => ({
+    params: { slug: service.slug },
+    props: { service }
+  }));
+}
+
+const { service } = Astro.props;
+const iconMap: Record<string, LucideIcon> = { Siren, Flame, Droplets, Wrench, Toilet, Shovel, Fuel, ThermometerSun };
+const Icon = iconMap[service.icon];
+
+const related = services.filter((s) => s.slug !== service.slug).slice(0, 3);
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${business.url}/` },
+    { '@type': 'ListItem', position: 2, name: 'Services', item: `${business.url}/services/` },
+    { '@type': 'ListItem', position: 3, name: service.title, item: `${business.url}/services/${service.slug}/` }
+  ]
+};
+
+const serviceSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  serviceType: service.title,
+  name: `${service.title} - ${business.name}`,
+  description: service.description,
+  provider: { '@id': `${business.url}/#business` },
+  areaServed: business.counties.map((c) => c.name)
+};
+---
+
+<BaseLayout
+  title={`${service.title} in Seattle | ${business.name}`}
+  description={service.short}
+  schema={[breadcrumbSchema, serviceSchema]}
+>
+  <PageHero
+    title={service.title}
+    description={service.short}
+    crumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services/' }, { label: service.title }]}
+    image={service.image}
+    imageAlt={`${service.title} service from Pinky's Plumbing`}
+  />
+
+  <section class="bg-ink-950 py-20 sm:py-28">
+    <Container class="grid gap-14 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
+      <div data-reveal="left">
+        <Eyebrow>{service.eyebrow}</Eyebrow>
+        <div class="mt-4 flex items-center gap-4">
+          <IconBadge icon={Icon} size="lg" />
+          <h2 class="font-display text-2xl font-bold text-white sm:text-3xl">{service.title}</h2>
+        </div>
+        <p class="mt-6 max-w-xl leading-relaxed text-balance text-white/70">{service.description}</p>
+
+        <ul class="mt-8 space-y-3">
+          {
+            service.bullets.map((b) => (
+              <li class="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-sm text-white/80">
+                <CircleCheck className="mt-0.5 size-5 shrink-0 text-teal-400" aria-hidden="true" />
+                {b}
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="mt-9 flex flex-wrap gap-3">
+          <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible>
+            Schedule Service
+          </SpecularButton>
+          <Button href={`tel:${business.hotline.tel}`} variant="secondary" size="lg" icon={Phone}>
+            {business.hotline.display}
+          </Button>
+        </div>
+      </div>
+
+      <aside class="lg:sticky lg:top-32 lg:self-start" data-reveal="right">
+        <div class="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
+          <h3 class="font-display text-lg font-bold text-white">Why call Pinky's?</h3>
+          <ul class="mt-5 space-y-4 text-sm text-white/70">
+            <li class="flex items-start gap-3">
+              <CircleCheck className="mt-0.5 size-4 shrink-0 text-pink-400" aria-hidden="true" />
+              Licensed, background-checked technicians
+            </li>
+            <li class="flex items-start gap-3">
+              <CircleCheck className="mt-0.5 size-4 shrink-0 text-pink-400" aria-hidden="true" />
+              No overtime charge, nights or weekends
+            </li>
+            <li class="flex items-start gap-3">
+              <CircleCheck className="mt-0.5 size-4 shrink-0 text-pink-400" aria-hidden="true" />
+              Free, no-obligation estimates
+            </li>
+            <li class="flex items-start gap-3">
+              <CircleCheck className="mt-0.5 size-4 shrink-0 text-pink-400" aria-hidden="true" />
+              Financing available
+            </li>
+          </ul>
+          <div class="mt-6 border-t border-white/10 pt-6">
+            <p class="text-xs font-semibold tracking-wide text-white/50 uppercase">Serving</p>
+            <p class="mt-1.5 text-sm text-white/70">King, Snohomish &amp; Pierce County</p>
+          </div>
+        </div>
+      </aside>
+    </Container>
+  </section>
+
+  <section class="border-t border-white/5 bg-teal-950 py-16 sm:py-20">
+    <Container>
+      <h2 class="font-display text-2xl font-bold text-white sm:text-3xl" data-reveal>Related Services</h2>
+      <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3" data-reveal-group>
+        {
+          related.map((s) => {
+            const RelIcon = iconMap[s.icon];
+            return (
+              <a
+                href={`/services/${s.slug}/`}
+                data-reveal
+                class="group flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:bg-white/[0.06]"
+              >
+                <IconBadge icon={RelIcon} tone="teal" />
+                <span>
+                  <span class="font-display block text-sm font-bold text-white">{s.title}</span>
+                  <span class="mt-1 flex items-center gap-1 text-xs text-pink-400">
+                    View service{' '}
+                    <ArrowRight
+                      className="size-3 transition-transform group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </span>
+              </a>
+            );
+          })
+        }
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

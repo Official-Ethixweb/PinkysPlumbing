@@ -1,0 +1,81 @@
+---
+import { Plus, Phone } from 'lucide-react';
+import Container from '../ui/Container.astro';
+import Eyebrow from '../ui/Eyebrow.astro';
+import Button from '../ui/Button.astro';
+import Reveal from '../shared/Reveal.astro';
+import RotatingText from '../islands/RotatingText.tsx';
+import { business } from '../../data/business';
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  items: readonly FaqItem[];
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+}
+
+const {
+  items,
+  eyebrow = 'FAQ',
+  title = 'Questions, answered.',
+  description = "Answers to what Seattle homeowners ask us most. Don't see yours here? Just call, we'll talk you through it."
+} = Astro.props;
+---
+
+<section class="bg-ink-950 py-20 sm:py-28">
+  <Container class="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+    <div class="lg:sticky lg:top-32 lg:self-start" data-reveal="left">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2
+        class="font-display mt-4 text-4xl leading-[1.02] font-extrabold tracking-[-0.02em] text-balance text-white sm:text-5xl"
+      >
+        <RotatingText
+          client:visible
+          texts={[title]}
+          auto={false}
+          animatePresenceInitial={true}
+          splitBy="words"
+          staggerDuration={0.04}
+          staggerFrom="first"
+          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
+        />
+      </h2>
+      <p class="mt-5 max-w-sm leading-relaxed text-balance text-white/60">{description}</p>
+      <div class="mt-8">
+        <Button href={`tel:${business.hotline.tel}`} variant="outline" size="lg" icon={Phone}>
+          {business.hotline.display}
+        </Button>
+      </div>
+    </div>
+
+    <Reveal as="div" class="space-y-3" step={60}>
+      {
+        items.map((item, i) => (
+          <details
+            data-reveal
+            name="faq-accordion"
+            open={i === 0}
+            class="group rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors open:bg-white/[0.06] sm:px-7 sm:py-6"
+          >
+            <summary class="font-display flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold text-white sm:text-lg [&::-webkit-details-marker]:hidden">
+              {item.question}
+              <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/5 transition-colors group-open:bg-pink-500/15">
+                <Plus
+                  className="size-4 shrink-0 text-pink-400 transition-transform duration-300 group-open:rotate-45"
+                  aria-hidden="true"
+                />
+              </span>
+            </summary>
+            <p class="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/65">{item.answer}</p>
+          </details>
+        ))
+      }
+    </Reveal>
+  </Container>
+</section>

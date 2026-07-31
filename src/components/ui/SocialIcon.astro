@@ -1,0 +1,43 @@
+---
+interface Props {
+  network: 'facebook' | 'twitter' | 'youtube';
+  href: string;
+}
+const { network, href } = Astro.props;
+
+const labels: Record<Props['network'], string> = {
+  facebook: 'Facebook',
+  twitter: 'X (Twitter)',
+  youtube: 'YouTube'
+};
+---
+
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label={`${labels[network]}, opens in a new tab`}
+  class="inline-flex size-9 items-center justify-center rounded-full bg-white/5 text-white/70 ring-1 ring-white/10 transition-colors duration-300 ring-inset hover:bg-pink-600 hover:text-white hover:ring-pink-600"
+>
+  {
+    network === 'facebook' && (
+      <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+        <path d="M13.5 21v-8.2h2.75l.41-3.19h-3.16V7.53c0-.92.26-1.55 1.58-1.55h1.68V3.14C15.99 3.05 15.03 3 13.9 3c-2.36 0-3.97 1.44-3.97 4.08v2.53H7.16v3.19h2.77V21h3.57Z" />
+      </svg>
+    )
+  }
+  {
+    network === 'twitter' && (
+      <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+        <path d="M18.24 3H21l-6.27 7.16L22 21h-6.19l-4.85-6.34L5.4 21H2.62l6.7-7.66L2 3h6.34l4.38 5.79L18.24 3Zm-1.08 16.17h1.53L7.02 4.74H5.38l11.78 14.43Z" />
+      </svg>
+    )
+  }
+  {
+    network === 'youtube' && (
+      <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
+        <path d="M21.58 7.2a2.75 2.75 0 0 0-1.94-1.95C17.9 4.75 12 4.75 12 4.75s-5.9 0-7.64.5A2.75 2.75 0 0 0 2.42 7.2 28.7 28.7 0 0 0 1.92 12a28.7 28.7 0 0 0 .5 4.8 2.75 2.75 0 0 0 1.94 1.95c1.74.5 7.64.5 7.64.5s5.9 0 7.64-.5a2.75 2.75 0 0 0 1.94-1.95c.34-1.58.51-3.19.5-4.8a28.7 28.7 0 0 0-.5-4.8ZM9.94 15.02V8.98L15.5 12l-5.56 3.02Z" />
+      </svg>
+    )
+  }
+</a>

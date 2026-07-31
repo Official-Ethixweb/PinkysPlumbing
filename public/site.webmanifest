@@ -1,0 +1,13 @@
+{
+  "name": "Pinky's Plumbing",
+  "short_name": "Pinky's Plumbing",
+  "description": "24-hour residential & commercial plumbers serving Greater Seattle.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0d10",
+  "theme_color": "#ee1e87",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -1,0 +1,102 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/sections/PageHero.astro';
+import Container from '../../components/ui/Container.astro';
+import Reveal from '../../components/shared/Reveal.astro';
+import IconBadge from '../../components/ui/IconBadge.astro';
+import { Image } from 'astro:assets';
+import {
+  ArrowRight,
+  CircleCheck,
+  Siren,
+  Flame,
+  Droplets,
+  Wrench,
+  Toilet,
+  Shovel,
+  Fuel,
+  ThermometerSun,
+  type LucideIcon
+} from 'lucide-react';
+import { services } from '../../data/services';
+import { business } from '../../data/business';
+import heroImg from '../../assets/images/service-drain-cleaning.webp';
+
+const iconMap: Record<string, LucideIcon> = { Siren, Flame, Droplets, Wrench, Toilet, Shovel, Fuel, ThermometerSun };
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${business.url}/` },
+    { '@type': 'ListItem', position: 2, name: 'Services', item: `${business.url}/services/` }
+  ]
+};
+---
+
+<BaseLayout
+  title="Plumbing Services in Seattle | Pinky's Plumbing"
+  description="Emergency plumbing, water heaters, drain cleaning, sewer service, gas line install & more. Licensed, 24-hour plumbers serving King, Snohomish & Pierce County."
+  schema={[breadcrumbSchema]}
+>
+  <PageHero
+    title="Our Services"
+    description="Residential & commercial plumbing, from a five-minute fix to a full sewer replacement."
+    crumbs={[{ label: 'Home', href: '/' }, { label: 'Services' }]}
+    image={heroImg}
+    imageAlt="A Pinky's Plumbing technician using a drain snake machine"
+  />
+
+  <section class="bg-ink-950 py-20 sm:py-28">
+    <Container>
+      <Reveal as="div" class="grid grid-cols-1 gap-6 md:grid-cols-2" step={60}>
+        {
+          services.map((s) => {
+            const Icon = iconMap[s.icon];
+            return (
+              <article
+                data-reveal
+                class="group hover:shadow-card-hover flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition-all duration-300 hover:border-pink-400/30 hover:bg-white/[0.05]"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <Image
+                    src={s.image}
+                    alt=""
+                    role="presentation"
+                    width={560}
+                    height={315}
+                    densities={[1, 2]}
+                    quality="high"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div class="from-ink-950 via-ink-950/10 absolute inset-0 bg-gradient-to-t to-transparent" />
+                  <IconBadge icon={Icon} tone="white" class="absolute bottom-4 left-5" />
+                </div>
+                <div class="flex flex-1 flex-col p-6">
+                  <p class="font-display text-xs font-bold tracking-wider text-pink-400 uppercase">{s.eyebrow}</p>
+                  <h2 class="font-display mt-1.5 text-xl font-bold text-white">{s.title}</h2>
+                  <p class="mt-2.5 text-sm leading-relaxed text-white/60">{s.short}</p>
+                  <ul class="mt-4 space-y-1.5">
+                    {s.bullets.slice(0, 2).map((b) => (
+                      <li class="flex items-start gap-2 text-xs text-white/55">
+                        <CircleCheck className="mt-0.5 size-3.5 shrink-0 text-teal-400" aria-hidden="true" />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={`/services/${s.slug}/`}
+                    class="font-display mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-pink-400 transition-colors hover:text-pink-300"
+                  >
+                    Learn More<span class="sr-only"> about {s.title}</span>{' '}
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </a>
+                </div>
+              </article>
+            );
+          })
+        }
+      </Reveal>
+    </Container>
+  </section>
+</BaseLayout>

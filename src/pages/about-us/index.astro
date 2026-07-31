@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/sections/PageHero.astro';
+import SplitFeature from '../../components/sections/SplitFeature.astro';
+import PromiseBanner from '../../components/sections/PromiseBanner.astro';
+import StatsStrip from '../../components/sections/StatsStrip.astro';
+import TeamBand from '../../components/sections/TeamBand.astro';
+import Container from '../../components/ui/Container.astro';
+import Eyebrow from '../../components/ui/Eyebrow.astro';
+import SpecularButton from '../../components/islands/SpecularButton.tsx';
+import PhotoStack from '../../components/islands/PhotoStack.tsx';
+import { Hand } from 'lucide-react';
+import { getImage } from 'astro:assets';
+import { specularPink } from '../../lib/specularPresets';
+import teamPhoto from '../../assets/images/team-photo.webp';
+import clientHandshake from '../../assets/images/client-handshake.webp';
+import emergencyHelp from '../../assets/images/emergency-call-help.webp';
+import techPhoto from '../../assets/images/service-water-heaters.webp';
+
+const stats = [
+  { value: 24, suffix: '/7', label: 'Emergency Availability' },
+  { value: 3, suffix: '', label: 'Counties Served' },
+  { value: 100, suffix: '%', label: 'Satisfaction Promise' },
+  { value: 5, suffix: '★', label: 'Customer Rating' }
+];
+
+// PhotoStack is a plain React island: it needs finished URL strings, not
+// astro:assets ImageMetadata objects, so the optimized variants are
+// resolved here at build time and passed down as props.
+const stackSources = [
+  { img: teamPhoto, alt: 'The Pinky’s Plumbing team in front of the service trucks' },
+  { img: clientHandshake, alt: 'A technician shaking hands with a homeowner' },
+  { img: techPhoto, alt: 'A technician servicing a water heater' },
+  { img: emergencyHelp, alt: 'A homeowner calling Pinky’s Plumbing for help' }
+];
+const stackImages = await Promise.all(
+  stackSources.map(async ({ img, alt }) => {
+    const optimized = await getImage({ src: img, width: 480, height: 480, format: 'webp', quality: 'high' });
+    return { src: optimized.src, alt };
+  })
+);
+---
+
+<BaseLayout
+  title="About Pinky's Plumbing | Licensed Seattle Plumbers"
+  description="Meet Pinky's Plumbing: Seattle's licensed, background-checked, 24-hour residential & commercial plumbing team serving King, Snohomish & Pierce County."
+>
+  <PageHero
+    title="About Us"
+    description="Dependable, background-checked plumbers who treat your home like their own."
+    crumbs={[{ label: 'Home', href: '/' }, { label: 'About Us' }]}
+    image={teamPhoto}
+    imageAlt="The Pinky's Plumbing team lined up in front of two service trucks"
+  />
+
+  <section class="bg-ink-950 py-16 sm:py-20">
+    <Container class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      <div class="relative mx-auto aspect-square w-full max-w-[380px]" data-reveal="left">
+        <PhotoStack images={stackImages} client:visible />
+        <span
+          class="bg-ink-900/95 shadow-card-hover pointer-events-none absolute -right-3 -bottom-3 z-10 flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-xl"
+        >
+          <Hand className="size-3.5 text-pink-400" aria-hidden="true" />
+          Drag me
+        </span>
+      </div>
+
+      <div data-reveal="right">
+        <Eyebrow>Dependable Professionals</Eyebrow>
+        <h2 class="font-display mt-4 text-3xl leading-[1.1] font-bold text-balance text-white sm:text-4xl">
+          Plumbers You Can Count On
+        </h2>
+        <p class="mt-5 max-w-lg leading-relaxed text-balance text-white/65">
+          At Pinky's, we care about your safety, comfort, and satisfaction. Every employee is drug-tested and passes a
+          thorough background check before they're allowed on a job. When one of our technicians arrives at your door,
+          you can feel safe knowing they're professional, licensed, knowledgeable, and highly skilled.
+        </p>
+        <div class="mt-8">
+          <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible> Contact Us </SpecularButton>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <StatsStrip stats={stats} tone="teal" />
+
+  <SplitFeature
+    eyebrow="Repair, Service, or Installation"
+    title="Pinky's 24/7 Service"
+    body="Whether you call us at 4:00 in the morning or 4:00 in the afternoon, you can rest assured we'll offer fast, reliable plumbing service to meet your needs. We never charge more just because you called in the evening or on the weekend. That's a Pinky's Promise to you."
+    image={emergencyHelp}
+    imageAlt="A homeowner calling Pinky's Plumbing for emergency help"
+    reverse
+    cta={{ label: 'Schedule Service', href: '/contact-us/', showPhone: true }}
+  />
+
+  <PromiseBanner />
+
+  <TeamBand />
+</BaseLayout>

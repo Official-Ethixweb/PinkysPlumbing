@@ -1,0 +1,30 @@
+---
+/**
+ * Infinite left-to-right review marquee. Pure CSS (see `marquee-ltr` in
+ * global.css), no JS, no Swiper. The 3 real reviews are duplicated once
+ * (the minimum a seamless loop needs); the duplicate copy is aria-hidden
+ * so screen readers only ever hear each review once.
+ */
+import TestimonialCard from './TestimonialCard.astro';
+import { testimonials } from '../../data/business';
+---
+
+<div class="group relative left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+  <div
+    class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-teal-900 to-transparent sm:w-32"
+  >
+  </div>
+  <div
+    class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-teal-900 to-transparent sm:w-32"
+  >
+  </div>
+
+  <div class="animate-marquee-ltr flex w-max gap-6 py-2 group-hover:[animation-play-state:paused]">
+    <div class="flex shrink-0 gap-6">
+      {testimonials.map((t) => <TestimonialCard {...t} />)}
+    </div>
+    <div class="flex shrink-0 gap-6" aria-hidden="true">
+      {testimonials.map((t) => <TestimonialCard {...t} hidden />)}
+    </div>
+  </div>
+</div>
