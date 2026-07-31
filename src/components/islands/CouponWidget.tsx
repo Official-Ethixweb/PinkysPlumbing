@@ -68,6 +68,15 @@ export default function CouponWidget() {
     hydrated.current = true;
   }, []);
 
+  // Mobile has no floating tab of its own (removed - it covered the hero
+  // content on small screens). Instead the mobile nav menu has a "Coupons"
+  // row (see Navbar.astro) that closes the menu and fires this event.
+  useEffect(() => {
+    const onOpenRequest = () => setOpen(true);
+    window.addEventListener('open-coupon-widget', onOpenRequest);
+    return () => window.removeEventListener('open-coupon-widget', onOpenRequest);
+  }, []);
+
   useEffect(() => {
     if (!hydrated.current) return;
     sessionStorage.setItem(STORAGE_KEY, open ? '1' : '0');
@@ -116,14 +125,14 @@ export default function CouponWidget() {
         aria-expanded={open}
         aria-controls="coupon-panel"
         onClick={() => setOpen((v) => !v)}
-        className={`shadow-glow-pink fixed top-[84px] left-3 z-40 flex h-10 flex-row items-center gap-1.5 rounded-full border border-white/15 bg-gradient-to-b from-pink-500 to-pink-700 px-3.5 text-white transition-[width,padding] duration-300 lg:top-1/2 lg:left-0 lg:h-auto lg:w-12 lg:-translate-y-1/2 lg:flex-col lg:gap-2 lg:rounded-l-none lg:rounded-r-2xl lg:border-l-0 lg:px-0 lg:py-5 lg:hover:w-14 ${open ? '' : 'animate-float'}`}
+        className={`shadow-glow-pink fixed top-1/2 left-0 z-40 hidden w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl border border-l-0 border-white/15 bg-gradient-to-b from-pink-500 to-pink-700 py-5 text-white transition-[width,padding] duration-300 hover:w-14 lg:flex ${open ? '' : 'animate-float'}`}
       >
         {open ? (
           <X className="size-4 shrink-0" aria-hidden="true" />
         ) : (
           <Tag className="size-4 shrink-0" aria-hidden="true" />
         )}
-        <span className="font-display text-[11px] font-bold tracking-wider uppercase lg:[transform:rotate(180deg)] lg:[writing-mode:vertical-rl]">
+        <span className="font-display [transform:rotate(180deg)] text-[11px] font-bold tracking-wider uppercase [writing-mode:vertical-rl]">
           {open ? 'Close' : 'Coupons'}
         </span>
         {!open && (
@@ -140,11 +149,11 @@ export default function CouponWidget() {
             id="coupon-panel"
             role="dialog"
             aria-label="Current coupons and offers"
-            initial={{ x: -24, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -24, opacity: 0 }}
-            transition={{ duration: 0.4, ease: EASE }}
-            className="border-ink-100 fixed top-[136px] left-3 z-40 flex max-h-[min(600px,calc(100dvh-220px))] w-[calc(100vw-1.5rem)] max-w-[380px] flex-col overflow-hidden rounded-3xl border bg-white shadow-2xl shadow-black/15 lg:top-1/2 lg:left-12 lg:max-h-[min(600px,calc(100dvh-160px))] lg:w-[calc(100vw-3rem)] lg:max-w-[400px] lg:-translate-y-1/2 lg:rounded-l-none lg:rounded-r-3xl lg:border-l-0"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="border-ink-100 fixed inset-x-3 top-1/2 z-40 flex max-h-[min(600px,calc(100dvh-120px))] -translate-y-1/2 flex-col overflow-hidden rounded-3xl border bg-white shadow-2xl shadow-black/15 lg:inset-x-auto lg:top-1/2 lg:left-12 lg:max-h-[min(600px,calc(100dvh-160px))] lg:w-[calc(100vw-3rem)] lg:max-w-[400px] lg:rounded-l-none lg:rounded-r-3xl lg:border-l-0"
           >
             <div className="border-ink-100 shrink-0 border-b bg-gradient-to-br from-pink-50 to-transparent px-6 py-5">
               <p className="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-600 uppercase">
