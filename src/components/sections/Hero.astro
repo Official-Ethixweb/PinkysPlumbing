@@ -26,55 +26,39 @@ const badges = [
 ---
 
 <section class="relative overflow-hidden bg-white">
-  <!--
-    Root cause of the recurring "hard wall" (traced from scratch, not
-    re-tuned): this used to be TWO independently-parameterized gradients -
-    a full-section wash (0%-100%, Tailwind's default via-stop at 50%) and a
-    separate strip drawn inside the photo box, positioned starting at
-    section x≈48%. By the time the wash reached x≈48% it had already faded
-    to ~5% opacity - but the photo-box strip started its OWN curve fresh at
-    that same x, opening at 50% opacity. That's a jump from ~5% to ~50%
-    happening at one exact x-coordinate: a real discontinuity, not a
-    perception issue, and no amount of softening either curve individually
-    could fix it, because the problem was the seam BETWEEN them. Stacked on
-    top of that, the photo itself sat in a hard-edged rectangular box, so
-    the underlying content (page bg -> photo pixels) also flipped at that
-    same exact x. Two structural edges on the same line, unavoidably
-    visible regardless of opacity values.
+  <!-- mobile-only ambient backdrop: looping, low-opacity Seattle skyline
+       reveal. Swapped out at the same lg breakpoint the desktop truck
+       photo uses below (that one is hidden here, this one is hidden
+       there), so mobile always has some photographic depth behind the
+       text even though the truck box only makes sense at wide viewports.
+       Shipped as an animated WebP rather than <video> so it just
+       autoplays/loops with zero JS and no inline-playback quirks, and it
+       lives in /public rather than /src/assets because astro:assets'
+       image pipeline flattens animated WebP to a single frame, which
+       would kill the loop. Encoded small on purpose (680px wide,
+       gaussian-blurred, 10fps) specifically for this low-opacity ambient
+       use - a sharp version would look out of place at this size and cost
+       5-6x the bytes for detail nobody can see through 20% opacity. Masked
+       to fade at top/bottom instead of a hard-edged box, same reasoning as
+       the mask below: dissolving into the white page beats a painted-on
+       rectangle. -->
+  <div
+    class="pointer-events-none absolute inset-0 lg:hidden"
+    style="mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%);"
+    aria-hidden="true"
+  >
+    <img
+      src="/hero-skyline-loop.webp"
+      alt=""
+      class="h-full w-full object-cover opacity-20"
+      loading="eager"
+      decoding="async"
+    />
+  </div>
 
-    Fix: one continuous gradient for the whole section (mathematically
-    impossible to have a seam, since there's only one function now), and
-    the photo is feathered with a CSS mask instead of a white overlay - a
-    mask fades the photo's own pixel visibility to nothing, so the page
-    background shows through directly with nothing painted on top. An
-    overlay approach can only ever look like "veiled/washed photo"; a mask
-    looks like the photo dissolving into the page, which is the actual
-    "one continuous composition" look being asked for. The photo box is
-    also widened (52% -> 60%) so the feather has real room to be gradual
-    instead of packed into a ~200px strip.
-  -->
-  <!-- Tailwind's from/via/to utility classes default their stop positions
-       to 0%/50%/100% - meaning `to-transparent` only actually reached zero
-       at the section's right edge (100%), so the photo (which occupies the
-       right 60%, i.e. everything past x=40%) was carrying a lingering pink
-       tint the entire way, never fully clearing until the viewport's last
-       pixel. That's the "glare" over the truck. Written as an explicit
-       gradient instead so it can finish at a fixed point (38%) - a couple
-       points before the photo box even begins (40%) - guaranteeing zero
-       tint touches the photo at all; the wash lives only in the text
-       column. -->
-  <div
-    class="pointer-events-none absolute inset-0"
-    style="background: linear-gradient(to right, rgba(243,125,187,0.24) 0%, rgba(243,125,187,0.15) 16%, rgba(243,125,187,0.06) 28%, rgba(243,125,187,0) 38%);"
-    aria-hidden="true"
-  >
-  </div>
-  <!-- ambient glow -->
-  <div
-    class="bg-pink-350/18 pointer-events-none absolute top-0 -left-40 size-[560px] rounded-full blur-[120px]"
-    aria-hidden="true"
-  >
-  </div>
+  <!-- No pink wash/tint on this section at all - plain white behind the
+       text, by explicit request. Photo blend is handled entirely by the
+       mask on the photo box itself (below), not by any color overlay. -->
   <div
     class="pointer-events-none absolute -right-20 bottom-0 size-[420px] rounded-full bg-teal-500/15 blur-[120px]"
     aria-hidden="true"
@@ -87,10 +71,19 @@ const badges = [
        under the text reads as a duplicate/collision. Widened from the
        original 52% to 60% purely to give the mask feather (below) more
        room to be gradual. object-position nudged from 62% to 67% to keep
-       the truck framed the same way visually now that the box is wider. -->
+       the truck framed the same way visually now that the box is wider.
+
+       Mask reaches full opacity at box-local 60% (= viewport ~76%, a
+       ~690px-wide feather) - that's what was still reading as a lingering
+       haze over a third of the photo (soft edges are correct in principle,
+       but that's a genuinely wide soft-focus zone, not a subtle blend).
+       Tightened to full opacity by box-local 24% (viewport ~54%, ~270px)
+       so the photo reads crisp almost immediately past the seam, while
+       keeping the same number of in-between stops so the curve itself
+       still eases rather than cutting off abruptly. -->
   <div
     class="pointer-events-none absolute inset-y-0 right-0 hidden w-[60%] lg:block"
-    style="mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.06) 10%, rgba(0,0,0,0.22) 22%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.78) 46%, black 60%, black 100%); -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.06) 10%, rgba(0,0,0,0.22) 22%, rgba(0,0,0,0.48) 34%, rgba(0,0,0,0.78) 46%, black 60%, black 100%);"
+    style="mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.18) 5%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0.72) 16%, rgba(0,0,0,0.92) 20%, black 24%, black 100%); -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.18) 5%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0.72) 16%, rgba(0,0,0,0.92) 20%, black 24%, black 100%);"
   >
     <Image
       src={heroTruck}
