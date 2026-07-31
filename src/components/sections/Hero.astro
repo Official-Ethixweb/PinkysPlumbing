@@ -26,9 +26,20 @@ const badges = [
 ---
 
 <section class="relative overflow-hidden bg-white">
+  <!-- Base wash: spans the full section so the tint fades continuously the
+       whole way to the photo seam. Without this, the blur blob below fades
+       out around x≈600-700px but the photo lane doesn't start until
+       x≈918px (48% of the viewport) - that gap rendered as flat, uniform
+       white bordered by a gradient on one side and the photo on the other,
+       which read as a visible solid block/layer rather than open space. -->
+  <div
+    class="from-pink-350/14 via-pink-350/5 pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent"
+    aria-hidden="true"
+  >
+  </div>
   <!-- ambient glow -->
   <div
-    class="bg-pink-350/25 pointer-events-none absolute top-0 -left-40 size-[560px] rounded-full blur-[120px]"
+    class="bg-pink-350/18 pointer-events-none absolute top-0 -left-40 size-[560px] rounded-full blur-[120px]"
     aria-hidden="true"
   >
   </div>
