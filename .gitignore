@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# raw source video (100MB+, exceeds GitHub's file size limit) - kept
+# locally only; hero-skyline-loop.webp in public/ is the deployed asset
+source-media/
