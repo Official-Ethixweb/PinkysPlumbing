@@ -35,13 +35,16 @@ const badges = [
        autoplays/loops with zero JS and no inline-playback quirks, and it
        lives in /public rather than /src/assets because astro:assets'
        image pipeline flattens animated WebP to a single frame, which
-       would kill the loop. Encoded small on purpose (680px wide,
-       gaussian-blurred, 10fps) specifically for this low-opacity ambient
-       use - a sharp version would look out of place at this size and cost
-       5-6x the bytes for detail nobody can see through 20% opacity. Masked
-       to fade at top/bottom instead of a hard-edged box, same reasoning as
-       the mask below: dissolving into the white page beats a painted-on
-       rectangle. -->
+       would kill the loop. Pre-cropped to a portrait slice centered on
+       the Space Needle at encode time (source is a 16:9 landscape clip;
+       object-cover alone would zoom into an unrecognizable sliver of it
+       inside this section's portrait aspect on phones) and encoded small
+       on purpose (560px wide, gaussian-blurred, 10fps) for this
+       low-opacity ambient use - a sharp full-res version would look out
+       of place at this size and cost several times the bytes for detail
+       nobody can see through low opacity. Masked to fade at top/bottom
+       instead of a hard-edged box, same reasoning as the mask below:
+       dissolving into the white page beats a painted-on rectangle. -->
   <div
     class="pointer-events-none absolute inset-0 lg:hidden"
     style="mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%);"
@@ -50,7 +53,7 @@ const badges = [
     <img
       src="/hero-skyline-loop.webp"
       alt=""
-      class="h-full w-full object-cover opacity-20"
+      class="h-full w-full object-cover opacity-30"
       loading="eager"
       decoding="async"
     />
@@ -68,23 +71,18 @@ const badges = [
   <!-- background photo: kept out of the text column (not full-bleed) on
        purpose - the truck itself is painted with the same "Pinky's
        Plumbing" wordmark as the headline, and letting it run full-width
-       under the text reads as a duplicate/collision. Widened from the
-       original 52% to 60% purely to give the mask feather (below) more
-       room to be gradual. object-position nudged from 62% to 67% to keep
-       the truck framed the same way visually now that the box is wider.
+       under the text reads as a duplicate/collision. object-position at
+       67% keeps the truck framed with the logo clear of the text side.
 
-       Mask reaches full opacity at box-local 60% (= viewport ~76%, a
-       ~690px-wide feather) - that's what was still reading as a lingering
-       haze over a third of the photo (soft edges are correct in principle,
-       but that's a genuinely wide soft-focus zone, not a subtle blend).
-       Tightened to full opacity by box-local 24% (viewport ~54%, ~270px)
-       so the photo reads crisp almost immediately past the seam, while
-       keeping the same number of in-between stops so the curve itself
-       still eases rather than cutting off abruptly. -->
-  <div
-    class="pointer-events-none absolute inset-y-0 right-0 hidden w-[60%] lg:block"
-    style="mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.18) 5%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0.72) 16%, rgba(0,0,0,0.92) 20%, black 24%, black 100%); -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.18) 5%, rgba(0,0,0,0.45) 10%, rgba(0,0,0,0.72) 16%, rgba(0,0,0,0.92) 20%, black 24%, black 100%);"
-  >
+       No feather/mask at all now. Any gradual opacity ramp - no matter how
+       narrow - blends photo pixels with the plain white page background in
+       that zone, and a photo-blended-with-white patch reads as exactly the
+       "white haze/layer" that kept getting flagged, regardless of how few
+       px wide it was. A clean hard edge has zero blended pixels: it's
+       either full-color photo or plain white background, nothing in
+       between. This is a legitimate, common pattern (split-panel hero),
+       not a fallback - confident and crisp beats a smudged transition. -->
+  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[60%] lg:block">
     <Image
       src={heroTruck}
       alt="Pinky's Plumbing service truck parked on the Seattle waterfront"
