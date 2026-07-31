@@ -53,8 +53,19 @@ const badges = [
     also widened (52% -> 60%) so the feather has real room to be gradual
     instead of packed into a ~200px strip.
   -->
+  <!-- Tailwind's from/via/to utility classes default their stop positions
+       to 0%/50%/100% - meaning `to-transparent` only actually reached zero
+       at the section's right edge (100%), so the photo (which occupies the
+       right 60%, i.e. everything past x=40%) was carrying a lingering pink
+       tint the entire way, never fully clearing until the viewport's last
+       pixel. That's the "glare" over the truck. Written as an explicit
+       gradient instead so it can finish at a fixed point (38%) - a couple
+       points before the photo box even begins (40%) - guaranteeing zero
+       tint touches the photo at all; the wash lives only in the text
+       column. -->
   <div
-    class="from-pink-350/22 via-pink-350/6 pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent"
+    class="pointer-events-none absolute inset-0"
+    style="background: linear-gradient(to right, rgba(243,125,187,0.24) 0%, rgba(243,125,187,0.15) 16%, rgba(243,125,187,0.06) 28%, rgba(243,125,187,0) 38%);"
     aria-hidden="true"
   >
   </div>
