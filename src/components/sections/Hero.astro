@@ -40,7 +40,17 @@ const badges = [
        were all cut harder to compensate (720px wide, 8fps, 8s straight
        loop - no boomerang here, since this clip's motion is boats drifting
        one direction, not a reversible camera tilt) to land back near the
-       same ~1.3MB file size. Still an animated WebP rather than <video>
+       same ~1.3MB file size. Bumped to 15fps (from the original 8fps) since
+       8fps read as jittery for this much sharp, uncompressed-looking motion.
+       First attempt at 15fps clawed the file size back down by shrinking to
+       640px wide and dropping encode quality, but that made the frames
+       themselves visibly soft/blocky - not worth it. Kept the full 720px
+       width and a higher webp quality (-q:v 60, up from 35) instead, and
+       trimmed duration to 6s (from 8s) to offset the frame-count growth from
+       going to 15fps - loop length isn't perceptible at this scale, unlike
+       resolution/sharpness, so it's the cheaper lever. Lands at ~2MB, up
+       from ~1.3MB, in exchange for full sharpness at the smoother frame
+       rate. Still an animated WebP rather than <video>
        (zero JS, no inline-playback quirks) living in /public rather than
        /src/assets (astro:assets' image pipeline flattens animated WebP to
        a single frame, which would kill the loop). Masked to fade at
@@ -190,12 +200,25 @@ const badges = [
           transition={heroHeadlineTransition}
           splitLevelClassName="overflow-hidden pb-1 sm:pb-2"
           style={{ display: 'inline-flex' }}
+        />{' '}
+        <RotatingText
+          client:load
+          texts={["Call Pinky's"]}
+          auto={false}
+          animatePresenceInitial={true}
+          splitBy="words"
+          staggerDuration={0.04}
+          staggerFrom="first"
+          transition={heroHeadlineTransition}
+          splitLevelClassName="overflow-hidden pb-1 sm:pb-2"
+          mainClassName="text-[4px] align-baseline"
+          style={{ display: 'inline-flex' }}
         />
       </h1>
 
       <p class="text-ink-600 mt-6 max-w-lg text-lg leading-relaxed text-balance sm:text-xl lg:mt-3">
-        Call Pinky's, Seattle's 24-hour residential &amp; commercial plumbers. Honest pricing, fast dispatch, and a
-        promise to treat your home like our own.
+        Seattle's 24-hour residential &amp; commercial plumbers. Honest pricing, fast dispatch, and a promise to treat
+        your home like our own.
       </p>
 
       <!-- hidden below lg: StickyCallBar (mobile/tablet only, see
