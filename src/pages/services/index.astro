@@ -5,33 +5,16 @@ import Container from '../../components/ui/Container.astro';
 import Reveal from '../../components/shared/Reveal.astro';
 import IconBadge from '../../components/ui/IconBadge.astro';
 import { Image } from 'astro:assets';
-import {
-  ArrowRight,
-  CircleCheck,
-  Siren,
-  Flame,
-  Droplets,
-  Wrench,
-  Toilet,
-  Shovel,
-  Fuel,
-  ThermometerSun,
-  type LucideIcon
-} from 'lucide-react';
+import { ArrowRight, CircleCheck } from 'lucide-react';
 import { services } from '../../data/services';
-import { business } from '../../data/business';
 import heroImg from '../../assets/images/service-drain-cleaning.webp';
+import { serviceIconMap as iconMap } from '../../lib/serviceIcons';
+import { buildBreadcrumbSchema } from '../../lib/schema';
 
-const iconMap: Record<string, LucideIcon> = { Siren, Flame, Droplets, Wrench, Toilet, Shovel, Fuel, ThermometerSun };
-
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: `${business.url}/` },
-    { '@type': 'ListItem', position: 2, name: 'Services', item: `${business.url}/services/` }
-  ]
-};
+const breadcrumbSchema = buildBreadcrumbSchema([
+  { name: 'Home', path: '/' },
+  { name: 'Services', path: '/services/' }
+]);
 ---
 
 <BaseLayout

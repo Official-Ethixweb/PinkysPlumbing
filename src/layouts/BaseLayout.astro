@@ -5,7 +5,7 @@ import StickyCallBar from '../components/layout/StickyCallBar.astro';
 import CouponWidget from '../components/islands/CouponWidget.tsx';
 import ChatWidget from '../components/islands/ChatWidget.tsx';
 import AccessibilityWidget from '../components/islands/AccessibilityWidget.tsx';
-import { business } from '../data/business';
+import { business, testimonials } from '../data/business';
 import '../styles/global.css';
 import heroTruck from '../assets/images/hero-truck.webp';
 import { getImage } from 'astro:assets';
@@ -55,7 +55,17 @@ const localBusinessSchema = {
     opens: '00:00',
     closes: '23:59'
   },
-  sameAs: [business.social.facebook, business.social.twitter, business.social.youtube]
+  sameAs: [business.social.facebook, business.social.twitter, business.social.youtube],
+  // Individual Review entries only, no AggregateRating: Google's guidelines
+  // require reviewCount to reflect the true total review count from a real
+  // platform, and this site only has these 3 quotes to verify, not a total.
+  // Fabricating a count would risk a manual structured-data action.
+  review: testimonials.map((t) => ({
+    '@type': 'Review',
+    author: { '@type': 'Person', name: t.name },
+    reviewRating: { '@type': 'Rating', ratingValue: t.rating, bestRating: 5 },
+    reviewBody: t.quote
+  }))
 };
 
 const allSchema = [localBusinessSchema, ...schema];
@@ -108,7 +118,7 @@ const allSchema = [localBusinessSchema, ...schema];
       Skip to content
     </a>
     <Navbar />
-    <main id="main-content" class="pt-[76px] pb-[84px] sm:pt-[112px] lg:pb-0">
+    <main id="main-content" class="pt-[76px] pb-[84px] lg:pt-[112px] lg:pb-0">
       <slot />
     </main>
     <Footer />

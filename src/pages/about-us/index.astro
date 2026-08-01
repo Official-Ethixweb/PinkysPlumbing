@@ -16,6 +16,12 @@ import teamPhoto from '../../assets/images/team-photo.webp';
 import clientHandshake from '../../assets/images/client-handshake.webp';
 import emergencyHelp from '../../assets/images/emergency-call-help.webp';
 import techPhoto from '../../assets/images/service-water-heaters.webp';
+import { buildBreadcrumbSchema } from '../../lib/schema';
+
+const breadcrumbSchema = buildBreadcrumbSchema([
+  { name: 'Home', path: '/' },
+  { name: 'About Us', path: '/about-us/' }
+]);
 
 const stats = [
   { value: 24, suffix: '/7', label: 'Emergency Availability' },
@@ -44,6 +50,7 @@ const stackImages = await Promise.all(
 <BaseLayout
   title="About Pinky's Plumbing | Licensed Seattle Plumbers"
   description="Meet Pinky's Plumbing: Seattle's licensed, background-checked, 24-hour residential & commercial plumbing team serving King, Snohomish & Pierce County."
+  schema={[breadcrumbSchema]}
 >
   <PageHero
     title="About Us"

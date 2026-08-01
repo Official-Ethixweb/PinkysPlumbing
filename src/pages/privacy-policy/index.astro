@@ -2,14 +2,21 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Container from '../../components/ui/Container.astro';
 import { business } from '../../data/business';
+import { buildBreadcrumbSchema } from '../../lib/schema';
 
 const lastUpdated = 'July 31, 2026';
+
+const breadcrumbSchema = buildBreadcrumbSchema([
+  { name: 'Home', path: '/' },
+  { name: 'Privacy Policy', path: '/privacy-policy/' }
+]);
 ---
 
 <BaseLayout
   title={`Privacy Policy | ${business.name}`}
   description={`How ${business.name} collects, uses, and protects your information.`}
   noIndex={false}
+  schema={[breadcrumbSchema]}
 >
   <section class="bg-white py-20 sm:py-28">
     <Container class="mx-auto max-w-3xl">

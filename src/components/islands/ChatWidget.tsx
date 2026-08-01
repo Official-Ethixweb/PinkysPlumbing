@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X, Send, Phone, Mail, MessageCircle, Sparkles, CircleCheck } from 'lucide-react';
 import { business } from '../../data/business';
@@ -11,15 +11,45 @@ import {
   isValidPhone,
   type ChatContext
 } from '../../lib/chat/engine';
-import { topicLabel } from '../../lib/chat/knowledge';
+import { getPageContextTopic, topicLabel } from '../../lib/chat/knowledge';
+import { services } from '../../data/services';
+import { cityPages } from '../../data/cityPages';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const TEASER_SEEN_KEY = 'pinkys-chat-teaser-seen';
 
 type Message = { id: string; from: 'bot' | 'user'; content: React.ReactNode };
 type QuickAction = { key: string; label: string; shortLabel: string; triggerText: string };
-type LeadStep = 'idle' | 'offer' | 'name' | 'phone' | 'email' | 'confirm' | 'sending' | 'done';
-type LeadState = { step: LeadStep; name?: string; phone?: string; email?: string };
+type LeadStep =
+  | 'idle'
+  | 'offer'
+  | 'wizard-service'
+  | 'wizard-urgency'
+  | 'wizard-city'
+  | 'wizard-type'
+  | 'wizard-issue'
+  | 'name'
+  | 'phone'
+  | 'email'
+  | 'confirm'
+  | 'sending'
+  | 'done';
+type PropertyType = 'Residential' | 'Commercial';
+type LeadState = {
+  step: LeadStep;
+  name?: string;
+  phone?: string;
+  email?: string;
+  /** Set only when the visitor went through the guided Smart Estimate
+   * Wizard (as opposed to the plain "get my info to a human" offer flow),
+   * so the transcript and confirmation screen can show the extra detail. */
+  wizard?: boolean;
+  wizardService?: string;
+  wizardUrgent?: boolean;
+  wizardCity?: string;
+  wizardPropertyType?: PropertyType;
+  wizardIssue?: string;
+};
 type TranscriptLine = { from: 'bot' | 'user'; text: string };
 
 let idCounter = 0;
@@ -32,9 +62,62 @@ const GREETING = (
   </>
 );
 
+/** Smart greeting based on current page: a visitor already reading about a
+ * specific service or city gets acknowledged instead of a generic hello. */
+function buildGreeting(pageTopic: string | null): React.ReactNode {
+  if (pageTopic?.startsWith('service:')) {
+    const slug = pageTopic.slice('service:'.length);
+    const service = services.find((s) => s.slug === slug);
+    if (service) {
+      return (
+        <>
+          Hi, I&rsquo;m the Pinky&rsquo;s Plumbing assistant. Looking into {service.title.toLowerCase()}? I can answer
+          questions about it, pricing, or anything else on your mind.
+        </>
+      );
+    }
+  }
+  if (pageTopic?.startsWith('location:')) {
+    const slug = pageTopic.slice('location:'.length);
+    const city = cityPages.find((c) => c.slug === slug);
+    if (city) {
+      return (
+        <>
+          Hi, I&rsquo;m the Pinky&rsquo;s Plumbing assistant. Yep, we serve {city.name}, ask me anything about service
+          there, pricing, or a specific plumbing issue.
+        </>
+      );
+    }
+  }
+  return GREETING;
+}
+
+/** Quick-reply chips adapt to the page a visitor is chatting from, surfacing
+ * the one question they're most likely to have (spec: "suggested questions",
+ * "dynamic quick replies"). Falls back to the standard set everywhere else. */
+function buildQuickActions(pageTopic: string | null): QuickAction[] {
+  if (pageTopic?.startsWith('service:')) {
+    const slug = pageTopic.slice('service:'.length);
+    const service = services.find((s) => s.slug === slug);
+    if (service) {
+      const contextual: QuickAction = {
+        key: 'page-service-cost',
+        label: `Cost of ${service.title.toLowerCase()}`,
+        shortLabel: 'Pricing',
+        triggerText: 'How much will this cost?'
+      };
+      return [contextual, ...QUICK_ACTIONS.filter((qa) => qa.key !== 'services')];
+    }
+  }
+  if (pageTopic?.startsWith('location:')) {
+    return [...QUICK_ACTIONS];
+  }
+  return QUICK_ACTIONS;
+}
+
 const QUICK_ACTIONS: QuickAction[] = [
   {
-    key: 'estimate',
+    key: 'estimate-wizard',
     label: 'Get a free estimate',
     shortLabel: 'Free estimate',
     triggerText: "I'd like a free estimate"
@@ -104,13 +187,20 @@ function ActionButton({ label, onClick, disabled }: { label: string; onClick: ()
  * wired up yet, so this is the fastest honest way to get a lead to the
  * office without fabricating a delivery guarantee the site can't back. */
 function buildLeadMailto(lead: LeadState, ctx: ChatContext, transcript: TranscriptLine[]): string {
-  const subject = `Chatbot lead: ${lead.name} (${business.name} site)`;
+  const urgent = lead.wizardUrgent || ctx.urgent;
+  const subject = lead.wizard
+    ? `Estimate request: ${lead.wizardService ?? 'Plumbing service'} (${lead.name})${urgent ? ' — URGENT' : ''}`
+    : `Chatbot lead: ${lead.name} (${business.name} site)`;
   const topics = ctx.topicsDiscussed.map(topicLabel).join(', ') || 'General chat';
   const body = [
     `Name: ${lead.name}`,
     `Phone: ${lead.phone}`,
     lead.email ? `Email: ${lead.email}` : null,
-    `Urgent: ${ctx.urgent ? 'Yes' : 'No'}`,
+    lead.wizard ? `Service needed: ${lead.wizardService}` : null,
+    lead.wizard ? `City: ${lead.wizardCity}` : null,
+    lead.wizard ? `Property type: ${lead.wizardPropertyType}` : null,
+    lead.wizard && lead.wizardIssue ? `Issue details: ${lead.wizardIssue}` : null,
+    `Urgent: ${urgent ? 'Yes' : 'No'}`,
     `Topics discussed: ${topics}`,
     '',
     'Conversation:',
@@ -121,9 +211,20 @@ function buildLeadMailto(lead: LeadState, ctx: ChatContext, transcript: Transcri
   return `mailto:${business.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
+// Astro islands with client:load hydrate in the browser, so this module-level
+// read happens once, after mount, never during SSR.
+const initialPageTopic: string | null =
+  typeof window === 'undefined' ? null : getPageContextTopic(window.location.pathname);
+
 export default function ChatWidget() {
+  // Snapshotted once at module load rather than recomputed per-render: the
+  // greeting/quick-replies only need to reflect the page chat was opened on.
+  const [pageTopic] = useState<string | null>(initialPageTopic);
+  const quickActions = useMemo(() => buildQuickActions(pageTopic), [pageTopic]);
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([{ id: nextId(), from: 'bot', content: GREETING }]);
+  const [messages, setMessages] = useState<Message[]>([
+    { id: nextId(), from: 'bot', content: buildGreeting(initialPageTopic) }
+  ]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [teaser, setTeaser] = useState(false);
@@ -221,16 +322,39 @@ export default function ChatWidget() {
     );
   }
 
+  /** Entry point for the Smart Estimate Wizard: a guided, multi-step
+   * question flow (service -> urgency -> city -> property type -> issue ->
+   * name/phone/email/confirm) instead of a single freeform "tell me what's
+   * going on" box. Demonstrates an end-to-end structured lead capture
+   * without an LLM: every step is a fixed question with button answers. */
+  function startWizard() {
+    setCtx((c) => ({ ...c, leadOffered: true }));
+    setLead({ step: 'wizard-service', wizard: true });
+    pushBotReply(
+      <>Happy to help you get an estimate. What do you need help with?</>,
+      'Started the estimate wizard: asked for service type'
+    );
+  }
+
   function confirmReply(l: LeadState): React.ReactNode {
     return (
       <>
         <p>Here&rsquo;s what I&rsquo;ve got:</p>
         <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+          {l.wizard && <li>Service: {l.wizardService}</li>}
+          {l.wizard && <li>Urgency: {l.wizardUrgent ? 'Emergency' : 'Not an emergency'}</li>}
+          {l.wizard && <li>City: {l.wizardCity}</li>}
+          {l.wizard && <li>Property: {l.wizardPropertyType}</li>}
+          {l.wizard && l.wizardIssue && <li>Details: {l.wizardIssue}</li>}
           <li>Name: {l.name}</li>
           <li>Phone: {l.phone}</li>
           {l.email && <li>Email: {l.email}</li>}
         </ul>
-        <p className="mt-2">Want me to send this to the team?</p>
+        <p className="mt-2">
+          {l.wizard
+            ? 'Perfect! We’ve got everything our team needs. Want me to send this over now?'
+            : 'Want me to send this to the team?'}
+        </p>
       </>
     );
   }
@@ -273,6 +397,87 @@ export default function ChatWidget() {
       } else {
         pushBotReply(<>Just a yes or no works, want me to grab your info?</>, 'Reprompted for offer response');
       }
+      return;
+    }
+
+    if (step === 'wizard-service') {
+      const matchedService = services.find((s) => s.title.toLowerCase() === t.toLowerCase());
+      const label = matchedService?.title ?? t;
+      if (t.length < 2) {
+        pushBotReply(
+          <>What kind of issue is it, drain, water heater, leak, sewer, or something else?</>,
+          'Reprompted for service type'
+        );
+        return;
+      }
+      const urgentWords = /emergency|urgent|burst|flood|no water|leak|leaking|asap/i.test(t);
+      setLead((prev) => ({ ...prev, wizardService: label, step: 'wizard-urgency' }));
+      pushBotReply(
+        <>Got it, {label.toLowerCase()}. Is this an emergency, or can it wait for regular scheduling?</>,
+        `Wizard: service = ${label}`,
+        () => {
+          if (urgentWords) setCtx((c) => ({ ...c, urgent: true }));
+        }
+      );
+      return;
+    }
+
+    if (step === 'wizard-urgency') {
+      const isUrgent = /^(yes|yep|yeah|emergency|urgent|asap|right now)/i.test(t);
+      const isNotUrgent = /^(no|nope|not|can wait|whenever|regular|schedule)/i.test(t);
+      if (!isUrgent && !isNotUrgent) {
+        pushBotReply(<>Just need to know, is it an emergency (yes) or can it wait (no)?</>, 'Reprompted for urgency');
+        return;
+      }
+      setLead((prev) => ({ ...prev, wizardUrgent: isUrgent, step: 'wizard-city' }));
+      if (isUrgent) setCtx((c) => ({ ...c, urgent: true }));
+      pushBotReply(
+        isUrgent ? (
+          <>
+            Got it, we&rsquo;ll flag this as urgent. For fastest help right now you can also call{' '}
+            {business.hotline.display} directly. Which city are you in?
+          </>
+        ) : (
+          <>No rush, good to know. Which city are you in?</>
+        ),
+        `Wizard: urgency = ${isUrgent ? 'emergency' : 'not urgent'}`
+      );
+      return;
+    }
+
+    if (step === 'wizard-city') {
+      if (t.length < 2) {
+        pushBotReply(<>Which city should I put down?</>, 'Reprompted for city');
+        return;
+      }
+      setLead((prev) => ({ ...prev, wizardCity: t, step: 'wizard-type' }));
+      pushBotReply(<>Thanks. Is this for a home (residential) or a business (commercial)?</>, `Wizard: city = ${t}`);
+      return;
+    }
+
+    if (step === 'wizard-type') {
+      const isCommercial = /^comm/i.test(t);
+      const isResidential = /^resi|^home|^house/i.test(t);
+      if (!isCommercial && !isResidential) {
+        pushBotReply(<>Residential or commercial?</>, 'Reprompted for property type');
+        return;
+      }
+      const propertyType: PropertyType = isCommercial ? 'Commercial' : 'Residential';
+      setLead((prev) => ({ ...prev, wizardPropertyType: propertyType, step: 'wizard-issue' }));
+      pushBotReply(
+        <>
+          Last thing before I grab your contact info, anything else about the issue our team should know? (Or type
+          &ldquo;skip&rdquo;.)
+        </>,
+        `Wizard: property type = ${propertyType}`
+      );
+      return;
+    }
+
+    if (step === 'wizard-issue') {
+      const issue = /^skip$/i.test(t) ? undefined : t;
+      setLead((prev) => ({ ...prev, wizardIssue: issue, step: 'name' }));
+      pushBotReply(<>Great, what&rsquo;s your name?</>, 'Wizard: collected issue details, asked for name');
       return;
     }
 
@@ -365,15 +570,21 @@ export default function ChatWidget() {
       return;
     }
 
-    const result = getSmartReply(matchText, ctx);
+    const result = getSmartReply(matchText, ctx, pageTopic);
     setCtx(result.nextContext);
     pushBotReply(result.content, result.logLabel, () => {
-      if (result.offerLeadCapture) setTimeout(offerLeadCapture, 500);
+      if (result.startWizard) setTimeout(startWizard, 500);
+      else if (result.offerLeadCapture) setTimeout(offerLeadCapture, 500);
     });
   }
 
   function handleQuickAction(qa: QuickAction) {
     if (qa.key === 'coupons') window.dispatchEvent(new CustomEvent('open-coupon-widget'));
+    if (qa.key === 'estimate-wizard' || qa.key === 'page-service-estimate') {
+      pushUserMessage(qa.label);
+      startWizard();
+      return;
+    }
     handleUserInput(qa.label, qa.triggerText);
   }
 
@@ -392,9 +603,18 @@ export default function ChatWidget() {
         ? 'Your phone number…'
         : lead.step === 'email'
           ? 'Your email (or type skip)…'
-          : lead.step === 'offer' || lead.step === 'confirm'
+          : lead.step === 'offer' ||
+              lead.step === 'confirm' ||
+              lead.step === 'wizard-urgency' ||
+              lead.step === 'wizard-type'
             ? 'Yes or no…'
-            : 'Type a question…';
+            : lead.step === 'wizard-service'
+              ? 'e.g. drain cleaning…'
+              : lead.step === 'wizard-city'
+                ? 'Your city…'
+                : lead.step === 'wizard-issue'
+                  ? 'Optional details, or type skip…'
+                  : 'Type a question…';
 
   return (
     <div className="fixed right-4 bottom-24 z-40 lg:right-6 lg:bottom-6">
@@ -492,16 +712,39 @@ export default function ChatWidget() {
                   <ActionButton label="Yes, let's do it" onClick={() => handleUserInput("Yes, let's do it")} />
                   <ActionButton label="No thanks" onClick={() => handleUserInput('No thanks')} />
                 </div>
+              ) : lead.step === 'wizard-service' ? (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {services.map((s) => (
+                    <ActionButton key={s.slug} label={s.title} onClick={() => handleUserInput(s.title)} />
+                  ))}
+                  <ActionButton label="Something else" onClick={() => handleUserInput('Something else')} />
+                  <ActionButton label="Cancel" onClick={cancelLeadCapture} />
+                </div>
+              ) : lead.step === 'wizard-urgency' ? (
+                <div className="grid grid-cols-2 gap-1.5">
+                  <ActionButton label="Yes, emergency" onClick={() => handleUserInput('Yes, emergency')} />
+                  <ActionButton label="No, can wait" onClick={() => handleUserInput('No, can wait')} />
+                </div>
+              ) : lead.step === 'wizard-type' ? (
+                <div className="grid grid-cols-2 gap-1.5">
+                  <ActionButton label="Residential" onClick={() => handleUserInput('Residential')} />
+                  <ActionButton label="Commercial" onClick={() => handleUserInput('Commercial')} />
+                </div>
+              ) : lead.step === 'wizard-issue' ? (
+                <ActionButton label="Skip this" onClick={() => handleUserInput('skip')} />
               ) : lead.step === 'confirm' ? (
                 <div className="grid grid-cols-2 gap-1.5">
                   <ActionButton label="Yes, send it" onClick={() => handleUserInput('Yes, send it')} />
                   <ActionButton label="Start over" onClick={() => handleUserInput('Start over')} />
                 </div>
-              ) : lead.step === 'name' || lead.step === 'phone' || lead.step === 'email' ? (
+              ) : lead.step === 'name' ||
+                lead.step === 'phone' ||
+                lead.step === 'email' ||
+                lead.step === 'wizard-city' ? (
                 <ActionButton label="Cancel" onClick={cancelLeadCapture} />
               ) : (
                 <div className="grid grid-cols-3 gap-1.5">
-                  {QUICK_ACTIONS.map((qa) => (
+                  {quickActions.map((qa) => (
                     <ActionButton key={qa.key} label={qa.shortLabel} onClick={() => handleQuickAction(qa)} />
                   ))}
                 </div>

@@ -91,7 +91,3 @@ export const cityPages: CityPage[] = [
       "Pinky's dispatches throughout Lakewood for emergency plumbing, heating, and drain cleaning, any hour of the day."
   }
 ];
-
-export function getCityBySlug(slug: string): CityPage | undefined {
-  return cityPages.find((c) => c.slug === slug);
-}

@@ -34,16 +34,25 @@ export type SmartReplyResult = {
   logLabel: string;
   /** True when this is a good moment to invite the visitor into the lead-capture flow. */
   offerLeadCapture?: boolean;
+  /** True when explicit booking/estimate intent was detected: the widget
+   * should launch the guided Smart Estimate Wizard (service -> urgency ->
+   * city -> property type -> issue -> contact info) instead of the plain
+   * name/phone offer. */
+  startWizard?: boolean;
 };
 
-const EMERGENCY_RE = /\b(emergency|urgent|flood|flooding|flooded|sewage|overflow|overflowing|burst|right now|asap)\b/i;
-const GREETING_RE = /^\s*(hi|hello|hey|yo|sup|good morning|good afternoon|good evening)\b/i;
-const THANKS_RE = /\b(thank|thanks|appreciate it|appreciated)\b/i;
-const BYE_RE = /\b(bye|goodbye|see ya|talk later|gotta go)\b/i;
+const EMERGENCY_RE =
+  /\b(emergen(cy|c)|urgent|urgant|flood|flooding|flooded|sewage|overflow|overflowing|burst|bursted|busted pipe|broken pipe|pipe broke|gushing|spraying water|water everywhere|water all over|basement flooding|ceiling leak|no water at all|right now|right away|asap|help fast|need (someone|help) now)\b/i;
+const GREETING_RE =
+  /^\s*(hi+|hello|hey+|yo|sup|howdy|good morning|good afternoon|good evening|morning|afternoon|evening)\b/i;
+const THANKS_RE =
+  /\b(thank(s|you)?|thank you|thnx|thx|ty|appreciate it|appreciated|much appreciated|awesome thanks)\b/i;
+const BYE_RE =
+  /\b(bye|goodbye|good bye|see ya|see you|later|talk later|gotta go|have to go|im (done|good|all set)|that'?s all|nothing else|no more questions)\b/i;
 const HUMAN_RE =
-  /\b(real person|human|talk to someone|speak to someone|representative|agent|call you|your number|phone number|contact info)\b/i;
+  /\b(real person|real human|human|actual person|talk to someone|speak to someone|speak with someone|representative|rep\b|agent|dispatcher|call you|your number|phone number|contact info|talk to a manager|customer service)\b/i;
 const BOOKING_RE =
-  /free estimate|get an? (estimate|quote)|\bquote\b|\bschedule\b|\bbook\b|callback|call me back|come out|send (someone|a tech)|set up an appointment|how much (will|does) (it|this|that) cost/i;
+  /free estimate|get an? (estimate|quote)|\bquote\b|\bschedule\b|\bscheduel\b|\bbook\b|\bbooking\b|callback|call me back|come out|come take a look|send (someone|a tech|a plumber)|set up an appointment|make an appointment|need an appointment|how much (will|does) (it|this|that) cost|sign me up|i(?:'|)?d like (to|a) (schedule|book|estimate)|can someone come/i;
 
 const PHONE_RE = /(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
 const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
@@ -96,11 +105,12 @@ function humanReply(): ReactNode {
 function bookingReply(): ReactNode {
   return (
     <>
-      Happy to help. The fastest way is our estimate form, we typically respond within one business day.{' '}
+      Happy to help, let&rsquo;s get you an estimate. I&rsquo;ll ask a few quick questions and pass everything to our
+      team, or if you&rsquo;d rather,{' '}
       <a href="/contact-us/" className="font-semibold text-pink-600 hover:text-pink-700">
-        Open the estimate form
-      </a>
-      . Or tell me your name and number right here and I&rsquo;ll pass it along.
+        open the full estimate form
+      </a>{' '}
+      instead.
     </>
   );
 }
@@ -118,6 +128,27 @@ export function getGreetingSmalltalkReply(): ReactNode {
   return <>Hey! What can I help with, a service question, your area, pricing, or connecting you to a person?</>;
 }
 
+// Small reply pools for high-frequency smalltalk intents, picked by turn
+// count so a visitor who says "thanks" twice in one session doesn't see the
+// exact same sentence twice (spec: "never repetitive").
+const THANKS_REPLIES: ReactNode[] = [
+  <>You&rsquo;re welcome! Anything else I can help with?</>,
+  <>Anytime! Let me know if anything else comes up.</>,
+  <>Happy to help. Anything else on your mind?</>
+];
+
+function byeReplies(): ReactNode[] {
+  return [
+    <>Take care! Call {business.hotline.display} any time if something comes up.</>,
+    <>Sounds good, have a great one. We&rsquo;re here 24/7 at {business.hotline.display} if you need us.</>,
+    <>Talk soon! {business.hotline.display} if anything comes up, day or night.</>
+  ];
+}
+
+function pick<T>(pool: T[], turns: number): T {
+  return pool[turns % pool.length];
+}
+
 /**
  * Core reply function. Not an LLM: a small rule engine that checks
  * safety-critical intents first (emergency, human handoff, booking), then
@@ -128,7 +159,11 @@ export function getGreetingSmalltalkReply(): ReactNode {
  * after a few real answers, and never more than once per session unless the
  * visitor re-asks.
  */
-export function getSmartReply(text: string, ctx: ChatContext): SmartReplyResult {
+export function getSmartReply(
+  text: string,
+  ctx: ChatContext,
+  pageContextTopic: string | null = null
+): SmartReplyResult {
   const nextContext: ChatContext = { ...ctx, turns: ctx.turns + 1 };
   const canOfferExplicit = !ctx.leadSubmitted;
   const canOfferOrganic = !ctx.leadOffered && !ctx.leadDeclined && !ctx.leadSubmitted;
@@ -144,14 +179,14 @@ export function getSmartReply(text: string, ctx: ChatContext): SmartReplyResult 
   }
   if (THANKS_RE.test(text)) {
     return {
-      content: <>You&rsquo;re welcome! Anything else I can help with?</>,
+      content: pick(THANKS_REPLIES, ctx.turns),
       nextContext,
       logLabel: 'Acknowledged thanks'
     };
   }
   if (BYE_RE.test(text)) {
     return {
-      content: <>Take care! Call {business.hotline.display} any time if something comes up.</>,
+      content: pick(byeReplies(), ctx.turns),
       nextContext,
       logLabel: 'Said goodbye'
     };
@@ -162,8 +197,8 @@ export function getSmartReply(text: string, ctx: ChatContext): SmartReplyResult 
     return {
       content: bookingReply(),
       nextContext,
-      logLabel: 'Pointed to the estimate form and offered to take contact info',
-      offerLeadCapture: canOfferExplicit
+      logLabel: 'Offered the guided estimate wizard',
+      startWizard: canOfferExplicit
     };
   }
 
@@ -177,14 +212,20 @@ export function getSmartReply(text: string, ctx: ChatContext): SmartReplyResult 
     };
   }
 
-  const match = findBestMatch(text);
+  const match = findBestMatch(text, undefined, pageContextTopic);
   if (match) {
     nextContext.substantiveReplies += 1;
-    if (!nextContext.topicsDiscussed.includes(match.topic)) {
+    const isFirstMention = !ctx.topicsDiscussed.includes(match.topic);
+    if (isFirstMention) {
       nextContext.topicsDiscussed = [...nextContext.topicsDiscussed, match.topic];
     }
     const shouldOffer = canOfferOrganic && nextContext.substantiveReplies >= 3;
-    return { content: match.reply(), nextContext, logLabel: match.logLabel, offerLeadCapture: shouldOffer };
+    return {
+      content: match.reply({ isFirstMention }),
+      nextContext,
+      logLabel: match.logLabel,
+      offerLeadCapture: shouldOffer
+    };
   }
 
   return { content: fallbackReply(), nextContext, logLabel: "Didn't have a direct answer, suggested calling" };

@@ -80,10 +80,15 @@ export const services: Service[] = [
     title: 'Sewer Service',
     icon: 'Shovel',
     eyebrow: 'Sewer repair & install',
-    short: 'Sewer line cleaning, repair, and trenchless replacement.',
+    short: 'Sewer line cleaning, repair, trenchless replacement, and septic tank service.',
     description:
-      "Sewer lines can be blocked or damaged by root intrusion, age, or shifting soil. Our crews are trained in cleaning, repair, and replacement, with camera diagnostics so you know exactly what's happening underground.",
-    bullets: ['Video camera diagnostics', 'Trenchless repair options', 'Root intrusion clearing'],
+      "Sewer lines can be blocked or damaged by root intrusion, age, or shifting soil. Our crews are trained in cleaning, repair, and replacement, with camera diagnostics so you know exactly what's happening underground. We also service septic tanks for homes outside the municipal sewer system.",
+    bullets: [
+      'Video camera diagnostics',
+      'Trenchless repair options',
+      'Root intrusion clearing',
+      'Septic tank service'
+    ],
     image: sewerImg
   },
   {
@@ -109,7 +114,3 @@ export const services: Service[] = [
     image: heatingImg
   }
 ];
-
-export function getServiceBySlug(slug: string): Service | undefined {
-  return services.find((s) => s.slug === slug);
-}

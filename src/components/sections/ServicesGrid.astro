@@ -1,24 +1,12 @@
 ---
-import {
-  ArrowUpRight,
-  Siren,
-  Flame,
-  Droplets,
-  Wrench,
-  Toilet,
-  Shovel,
-  Fuel,
-  ThermometerSun,
-  type LucideIcon
-} from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import Container from '../ui/Container.astro';
 import SectionHeading from '../ui/SectionHeading.astro';
 import IconBadge from '../ui/IconBadge.astro';
 import Button from '../ui/Button.astro';
 import Reveal from '../shared/Reveal.astro';
 import { services } from '../../data/services';
-
-const iconMap: Record<string, LucideIcon> = { Siren, Flame, Droplets, Wrench, Toilet, Shovel, Fuel, ThermometerSun };
+import { serviceIconMap as iconMap } from '../../lib/serviceIcons';
 ---
 
 <section class="bg-white py-20 sm:py-28">

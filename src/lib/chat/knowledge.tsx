@@ -4,7 +4,7 @@ import { services, type Service } from '../../data/services';
 import { cityPages, type CityPage } from '../../data/cityPages';
 import { coupons } from '../../data/coupons';
 import { generalFaq } from '../../data/faq';
-import { business, promise, serviceAreas } from '../../data/business';
+import { business, promise, serviceAreas, testimonials } from '../../data/business';
 
 // Keyword-scored knowledge base built directly from the same content that
 // drives the services/, service-area/, and FAQ sections, so chatbot answers
@@ -12,13 +12,25 @@ import { business, promise, serviceAreas } from '../../data/business';
 // small rule engine matches on weighted keyword overlap, see
 // findBestMatch() below and getSmartReply() in engine.tsx.
 
+export type ReplyContext = {
+  /** True the first time this session a visitor lands on this entry's topic.
+   * Used to show a smart follow-up question once instead of on every re-ask. */
+  isFirstMention: boolean;
+};
+
 export type KnowledgeEntry = {
   id: string;
   /** Used for conversation-context tracking, e.g. "service:drain-cleaning" */
   topic: string;
   keywords: string[];
   weight?: number;
-  reply: () => ReactNode;
+  /** Marks a broad catchall entry (services-overview, areas-overview) whose
+   * keywords are common single words ("service", "area") likely to also
+   * appear in a more specific entry's match. On a tied score, a catchall
+   * entry loses to a non-catchall one instead of winning by array order, see
+   * findBestMatch(). Doesn't affect the entry's own raw score/threshold. */
+  isCatchall?: boolean;
+  reply: (ctx: ReplyContext) => ReactNode;
   /** Short plain-text summary of this answer, used in the lead email transcript (bot replies are rich JSX, not plain strings). */
   logLabel: string;
 };
@@ -83,42 +95,297 @@ export function tokenize(text: string): string[] {
     .filter((w) => w.length > 1 && !STOPWORDS.has(w));
 }
 
+// Levenshtein edit distance, used only for short single-word typo tolerance
+// ("watre" -> "water", "drin" -> "drain"). Deliberately not used for phrase
+// matching or long words, both accuracy risks and unnecessary cost, see
+// fuzzyKeywordHit() below for where the length/distance caps are enforced.
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
+/** How many typo'd characters we'll forgive for a single-word keyword, scaled
+ * to word length so short words ("gas", "hot") aren't fuzzy-matched into
+ * false positives while longer ones ("plumbing", "installation") tolerate a
+ * couple of slipped keys. */
+function maxEditDistanceFor(wordLength: number): number {
+  if (wordLength <= 4) return 0;
+  if (wordLength <= 7) return 1;
+  return 2;
+}
+
+/** True if any token in the visitor's message is a near-miss (typo) of the
+ * given single-word keyword. Only called after an exact-match pass finds
+ * nothing for that keyword, see findBestMatch(). */
+function fuzzyKeywordHit(keyword: string, tokens: string[]): boolean {
+  const maxDist = maxEditDistanceFor(keyword.length);
+  if (maxDist === 0) return false;
+  for (const token of tokens) {
+    if (Math.abs(token.length - keyword.length) > maxDist) continue;
+    if (editDistance(token, keyword) <= maxDist) return true;
+  }
+  return false;
+}
+
 // Handles cases where the site copy uses a different word than a visitor
 // would ("hydro jetting" vs. "jet", "no hot water" vs. "water heater"). Keyed
 // by service slug so it stays attached to the right entry as content changes.
 const SERVICE_SYNONYMS: Record<string, string[]> = {
   'emergency-plumbing': [
     'emergency',
+    'emergancy',
+    'emergancy plumber',
     'urgent',
+    'urgant',
     'burst pipe',
+    'burst pipes',
+    'busted pipe',
+    'broken pipe',
+    'pipe burst',
+    'pipe broke',
     'burst',
+    'bursted',
     'flood',
     'flooding',
     'flooded',
+    'water everywhere',
+    'water all over',
     'overflowing',
+    'overflow',
     'right now',
-    'asap'
+    'right away',
+    'asap',
+    'no water',
+    'water is gushing',
+    'gushing',
+    'spraying water',
+    'basement flooding',
+    'ceiling leak',
+    'ceiling is leaking',
+    'sos',
+    'help fast',
+    'need someone now',
+    '911'
   ],
-  'water-heaters': ['water heater', 'hot water', 'tankless', 'no hot water', 'pilot light'],
+  'water-heaters': [
+    'water heater',
+    'water heaters',
+    'water heather',
+    'waterheater',
+    'hot water heater',
+    'hot water tank',
+    'hot water',
+    'no hot water',
+    'cold water only',
+    'tankless',
+    'tankless heater',
+    'tank water heater',
+    'pilot light',
+    'pilot light out',
+    'water not heating',
+    'lukewarm water',
+    'rusty water',
+    'water heater leaking',
+    'water heater making noise',
+    'water heater tripping',
+    'reset button water heater',
+    'gas water heater',
+    'electric water heater',
+    'heater install',
+    'new water heater',
+    'replace water heater',
+    'watre heater',
+    'wter heater'
+  ],
   'drain-cleaning': [
+    'drain',
+    'drains',
+    'draine',
     'clog',
+    'clogg',
     'clogged',
+    'cloged',
+    'clogged drain',
+    'clogged sink',
+    'kitchen sink clogged',
+    'bathroom sink clogged',
+    'shower drain clogged',
+    'tub not draining',
+    'sink not draining',
+    'wont drain',
+    "won't drain",
+    'not draining',
+    'draining slow',
+    'slow drain',
+    'slow to drain',
     'backup',
     'backed up',
-    'slow drain',
+    'sink backed up',
+    'gurgling drain',
+    'gurgling',
+    'bad smell from drain',
+    'smelly drain',
+    'standing water',
+    'water pooling',
     'rooter',
+    'rooter service',
     'hydro jet',
     'hydro-jetting',
+    'hydrojetting',
     'jetting',
     'snake',
+    'snake the drain',
+    'auger',
     'roots',
-    'root intrusion'
+    'root intrusion',
+    'tree roots in pipe',
+    'main line clog',
+    'drain clog',
+    'drin clog'
   ],
-  'faucet-fixture': ['faucet', 'fixture', 'valve', 'leaky faucet', 'drip', 'dripping', 'shower valve'],
-  'toilet-repair': ['toilet', 'running toilet', 'flush', 'flushing', 'clogged toilet', 'wax ring'],
-  'sewer-service': ['sewer', 'sewer line', 'sewer backup', 'trenchless', 'camera inspection', 'video inspection'],
-  'gas-line-install': ['gas line', 'gas', 'propane', 'range hookup', 'dryer hookup', 'gas conversion'],
-  'heating-systems': ['furnace', 'heating', 'heat pump', 'boiler', 'no heat', 'thermostat', 'winter']
+  'faucet-fixture': [
+    'faucet',
+    'facet',
+    'facuet',
+    'faucett',
+    'fixture',
+    'fixtures',
+    'valve',
+    'shutoff valve',
+    'shut off valve',
+    'leaky faucet',
+    'faucet leaking',
+    'faucet is leaking',
+    'faucet dripping',
+    'drip',
+    'dripping',
+    'drippy faucet',
+    'shower valve',
+    'shower handle',
+    'low water pressure',
+    'water pressure low',
+    'no pressure',
+    'sink handle broken',
+    'sink handle loose',
+    'new faucet',
+    'install a faucet',
+    'kitchen faucet',
+    'bathroom faucet',
+    'outdoor spigot',
+    'hose bib'
+  ],
+  'toilet-repair': [
+    'toilet',
+    'toilett',
+    'toliet',
+    'running toilet',
+    'toilet running',
+    'toilet keeps running',
+    'toilet wont stop running',
+    'flush',
+    'flushing',
+    "won't flush",
+    'wont flush',
+    'weak flush',
+    'clogged toilet',
+    'toilet clogged',
+    'toilet overflowing',
+    'toilet is overflowing',
+    'toilet backed up',
+    'toilet leaking at base',
+    'wax ring',
+    'toilet rocking',
+    'toilet wobbles',
+    'toilet handle broken',
+    'toilet tank',
+    'new toilet',
+    'install a toilet',
+    'replace toilet',
+    'low flow toilet'
+  ],
+  'sewer-service': [
+    'sewer',
+    'sewer line',
+    'sewer lines',
+    'sewer backup',
+    'sewer backed up',
+    'sewage backup',
+    'sewage smell',
+    'raw sewage',
+    'main line',
+    'main sewer line',
+    'trenchless',
+    'trenchless repair',
+    'camera inspection',
+    'video inspection',
+    'sewer camera',
+    'septic',
+    'septic tank',
+    'septic system',
+    'septic pump',
+    'septic backup',
+    'yard flooding',
+    'sewage in yard',
+    'multiple drains backed up',
+    'whole house backup'
+  ],
+  'gas-line-install': [
+    'gas line',
+    'gas lines',
+    'gas pipe',
+    'gas',
+    'propane',
+    'natural gas',
+    'gas smell',
+    'smell gas',
+    'i smell gas',
+    'gas leak',
+    'range hookup',
+    'stove hookup',
+    'dryer hookup',
+    'fireplace hookup',
+    'gas conversion',
+    'convert to gas',
+    'gas line for grill',
+    'bbq gas line',
+    'install gas line'
+  ],
+  'heating-systems': [
+    'furnace',
+    'furnice',
+    'furnace not working',
+    'furnace wont turn on',
+    'no heat',
+    'heat not working',
+    'heater not working',
+    'heating',
+    'heat pump',
+    'boiler',
+    'thermostat',
+    'thermostat not working',
+    'cold house',
+    'house is cold',
+    'winter',
+    'furnace tune up',
+    'furnace maintenance',
+    'furnace making noise',
+    'heat pump not working'
+  ]
 };
 
 // Words that recur across several service slugs are too generic to act as a
@@ -147,6 +414,21 @@ function serviceKeywords(service: Service): string[] {
   ];
 }
 
+// Shown once per session, the first time a visitor asks about that service,
+// so the bot feels like it's actually listening instead of reciting the same
+// blurb ("Instead of ending conversations, ask intelligent follow-up
+// questions" from the spec). Kept short and answerable in a couple words.
+const SERVICE_FOLLOWUPS: Record<string, string> = {
+  'emergency-plumbing': 'Is water actively leaking or flooding right now?',
+  'water-heaters': 'Is it a total loss of hot water, or just not as hot as it should be?',
+  'drain-cleaning': 'Is this in the kitchen, a bathroom, or the main line outside?',
+  'faucet-fixture': 'Is it a steady drip, or is water actually spraying/running?',
+  'toilet-repair': 'Is it running constantly, clogged, or leaking at the base?',
+  'sewer-service': 'Is it a single drain backing up, or the whole house?',
+  'gas-line-install': 'Is this a new installation, or a repair on an existing line?',
+  'heating-systems': 'Is the system not turning on at all, or running but not heating?'
+};
+
 function buildServiceEntries(): KnowledgeEntry[] {
   return services.map((service) => ({
     id: `service:${service.slug}`,
@@ -154,7 +436,7 @@ function buildServiceEntries(): KnowledgeEntry[] {
     keywords: serviceKeywords(service),
     weight: 2,
     logLabel: `Explained ${service.title}`,
-    reply: () => (
+    reply: ({ isFirstMention }) => (
       <>
         <p>{service.short}</p>
         {service.bullets[0] && (
@@ -168,6 +450,7 @@ function buildServiceEntries(): KnowledgeEntry[] {
         >
           More on {service.title} <ArrowUpRight className="h-3 w-3" />
         </a>
+        {isFirstMention && SERVICE_FOLLOWUPS[service.slug] && <p className="mt-2">{SERVICE_FOLLOWUPS[service.slug]}</p>}
       </>
     )
   }));
@@ -259,8 +542,25 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
   {
     id: 'services-overview',
     topic: 'services-overview',
-    keywords: ['service', 'services', 'offer', 'offerings', 'provide', 'help with', 'do you do'],
+    keywords: [
+      'service',
+      'services',
+      'offer',
+      'offerings',
+      'provide',
+      'help with',
+      'do you do',
+      'what do you do',
+      'what do you fix',
+      'what can you fix',
+      'types of plumbing',
+      'kinds of service',
+      'list of services',
+      'everything you do',
+      'full list'
+    ],
     weight: 2,
+    isCatchall: true,
     logLabel: 'Listed all services',
     reply: () => (
       <>
@@ -274,8 +574,32 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
   {
     id: 'areas-overview',
     topic: 'areas-overview',
-    keywords: ['area', 'areas', 'location', 'locations', 'city', 'cities', 'region', 'where', 'serve', 'coverage'],
+    keywords: [
+      'area',
+      'areas',
+      'location',
+      'locations',
+      'city',
+      'cities',
+      'region',
+      'where',
+      'serve',
+      'coverage',
+      'service area',
+      'do you come to',
+      'do you come out',
+      'do you travel',
+      'travel to',
+      'zip code',
+      'county',
+      'counties',
+      'where are you located',
+      'where are you based',
+      'what cities',
+      'near me'
+    ],
     weight: 2,
+    isCatchall: true,
     logLabel: 'Listed service area coverage',
     reply: () => (
       <>
@@ -291,7 +615,32 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
   {
     id: 'hours',
     topic: 'hours',
-    keywords: ['hour', 'hours', 'open', '24', '247', 'time', 'weekend', 'sunday', 'holiday', 'closed'],
+    keywords: [
+      'hour',
+      'hours',
+      'open',
+      'open now',
+      'are you open',
+      '24',
+      '247',
+      '24 7',
+      '24/7',
+      'time',
+      'what time',
+      'weekend',
+      'weekends',
+      'saturday',
+      'sunday',
+      'holiday',
+      'holidays',
+      'christmas',
+      'thanksgiving',
+      'closed',
+      'late night',
+      'middle of the night',
+      'early morning',
+      'overnight'
+    ],
     weight: 2,
     logLabel: 'Answered a question about hours',
     reply: () => <>{business.hours}, including nights, weekends, and holidays, with no overtime upcharge.</>
@@ -299,7 +648,21 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
   {
     id: 'promise',
     topic: 'promise',
-    keywords: ['warrant', 'warranty', 'guarantee', 'guaranteed', 'promise', 'trust', 'reliable'],
+    keywords: [
+      'warrant',
+      'warranty',
+      'warrenty',
+      'guarantee',
+      'guaranteed',
+      'promise',
+      'trust',
+      'reliable',
+      'stand behind your work',
+      'what if it breaks again',
+      'redo the job',
+      'satisfaction guarantee',
+      'happy with the work'
+    ],
     weight: 2,
     logLabel: 'Shared our promise to customers',
     reply: () => (
@@ -320,14 +683,30 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
       'price',
       'prices',
       'pricing',
+      'pricing info',
       'cost',
       'costs',
+      'costly',
       'expensive',
       'cheap',
+      'cheapest',
+      'affordable',
       'afford',
       'budget',
       'estimate',
-      'quote'
+      'estamate',
+      'quote',
+      'ballpark',
+      'how much is it',
+      'how much would it be',
+      'what will it cost',
+      'flat rate',
+      'hourly rate',
+      'upfront pricing',
+      'hidden fees',
+      'trip fee',
+      'service call fee',
+      'diagnostic fee'
     ],
     weight: 2,
     logLabel: 'Explained pricing philosophy',
@@ -344,21 +723,172 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
   {
     id: 'insurance-licensing',
     topic: 'permits',
-    keywords: ['permit', 'permits', 'licensed', 'license', 'insured', 'insurance', 'bonded', 'background', 'certified'],
+    keywords: [
+      'permit',
+      'permits',
+      'licensed',
+      'licence',
+      'license',
+      'licensing',
+      'insured',
+      'insurance',
+      'bonded',
+      'bonded and insured',
+      'background',
+      'background check',
+      'certified',
+      'accredited',
+      'qualifications',
+      'credentials',
+      'drug tested',
+      'drug test',
+      'are your plumbers licensed',
+      'license number'
+    ],
     weight: 2,
     logLabel: 'Answered a question about licensing/insurance',
     reply: () => (
       <>
-        We&rsquo;re fully licensed and insured (WA license {business.license.wa}). Every technician is
-        background-checked and drug-tested before they&rsquo;re ever sent to a job site.
+        We&rsquo;re fully licensed and insured (WA license {business.license.wa}, TX {business.license.tx}). Every
+        technician is background-checked and drug-tested before they&rsquo;re ever sent to a job site.
+      </>
+    )
+  },
+  {
+    id: 'reviews-testimonials',
+    topic: 'reviews',
+    keywords: [
+      'review',
+      'reviews',
+      'testimonial',
+      'testimonials',
+      'rating',
+      'ratings',
+      'rated',
+      'star',
+      'stars',
+      '5 star',
+      'five star',
+      'feedback',
+      'reputation',
+      'good company',
+      'trustworthy',
+      'google reviews',
+      'yelp',
+      'what do people say',
+      'happy customers',
+      'customer satisfaction',
+      'social proof'
+    ],
+    weight: 2,
+    logLabel: 'Shared customer reviews',
+    reply: () => {
+      const t = testimonials[0];
+      return (
+        <>
+          <p>We&rsquo;re proud of our 5-star reputation. Here&rsquo;s one from {t.name}:</p>
+          <p className="mt-2 italic">&ldquo;{t.quote}&rdquo;</p>
+          <a
+            href="/contact-us/#reviews"
+            className="mt-2 inline-flex items-center gap-1 font-semibold text-pink-600 hover:text-pink-700"
+          >
+            Read more reviews <ArrowUpRight className="h-3 w-3" />
+          </a>
+        </>
+      );
+    }
+  },
+  {
+    id: 'why-choose-us',
+    topic: 'why-choose-us',
+    keywords: [
+      'why choose',
+      'why pinky',
+      'why should i',
+      'why you',
+      'different',
+      'stand out',
+      'better than',
+      'best plumber',
+      'best plumbing company',
+      'top rated',
+      'trust you',
+      'experience',
+      'experienced',
+      'how long have you',
+      'how long in business',
+      'years in business',
+      'established',
+      'family owned',
+      'locally owned',
+      'reputable'
+    ],
+    weight: 2,
+    logLabel: 'Explained why customers choose Pinky’s',
+    reply: () => (
+      <>
+        Families and business owners across the Seattle area choose us because we&rsquo;re licensed, background-checked,
+        and available 24/7 with no overtime upcharge, every job gets an honest, upfront quote first.{' '}
+        <a href="/about-us/" className="font-semibold text-pink-600 hover:text-pink-700">
+          More about us
+        </a>
+      </>
+    )
+  },
+  {
+    id: 'commercial-residential',
+    topic: 'commercial-residential',
+    keywords: [
+      'commercial',
+      'residential',
+      'business plumbing',
+      'office building',
+      'office',
+      'restaurant plumbing',
+      'restaurant',
+      'apartment',
+      'property manager',
+      'landlord',
+      'tenant',
+      'home or business',
+      'my house',
+      'my home'
+    ],
+    weight: 3,
+    logLabel: 'Confirmed residential and commercial service',
+    reply: () => (
+      <>
+        We handle both. Whether it&rsquo;s a home repair or a commercial property, restaurant, office, or rental, our
+        licensed technicians are equipped for it.{' '}
+        <a href="/contact-us/" className="font-semibold text-pink-600 hover:text-pink-700">
+          Get a free estimate
+        </a>
       </>
     )
   },
   {
     id: 'financing',
     topic: 'financing',
-    keywords: ['financ', 'financing', 'payment plan', 'payment', 'loan'],
-    weight: 2,
+    keywords: [
+      'financing',
+      'finance',
+      'finanacing',
+      'payment plan',
+      'payment plans',
+      'payment',
+      'payments',
+      'loan',
+      'loans',
+      'pay over time',
+      'pay monthly',
+      'monthly payments',
+      'credit',
+      'zero interest',
+      'no interest',
+      "can't afford it all at once",
+      'installments'
+    ],
+    weight: 3,
     logLabel: 'Answered a question about financing',
     reply: () => (
       <>
@@ -373,6 +903,7 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
     keywords: [
       'coupon',
       'coupons',
+      'coopon',
       'discount',
       'discounts',
       'deal',
@@ -380,8 +911,16 @@ const STATIC_ENTRIES: KnowledgeEntry[] = [
       'offer',
       'offers',
       'savings',
+      'save money',
       'promo',
-      'promo code'
+      'promo code',
+      'promotion',
+      'promotions',
+      'special',
+      'specials',
+      'sale',
+      'any deals',
+      'money off'
     ],
     weight: 2,
     logLabel: 'Pointed to current coupons',
@@ -423,7 +962,28 @@ export function topicLabel(topic: string): string {
   return topic.replace(/-/g, ' ');
 }
 
-export function findBestMatch(input: string, entries: KnowledgeEntry[] = getKnowledgeBase()): KnowledgeEntry | null {
+/** Maps the current page path (e.g. "/services/water-heaters/") to a
+ * knowledge-base topic id, so a visitor chatting from that page gets a small
+ * relevance boost toward what they're already looking at ("context-aware
+ * responses" from the spec's bonus features). Returns null on pages with no
+ * obvious single topic (home, contact, etc). */
+export function getPageContextTopic(pathname: string): string | null {
+  const serviceMatch = pathname.match(/^\/services\/([^/]+)\/?$/);
+  if (serviceMatch && services.some((s) => s.slug === serviceMatch[1])) {
+    return `service:${serviceMatch[1]}`;
+  }
+  const cityMatch = pathname.match(/^\/service-area\/([^/]+)\/?$/);
+  if (cityMatch && cityPages.some((c) => c.slug === cityMatch[1])) {
+    return `location:${cityMatch[1]}`;
+  }
+  return null;
+}
+
+export function findBestMatch(
+  input: string,
+  entries: KnowledgeEntry[] = getKnowledgeBase(),
+  contextTopic: string | null = null
+): KnowledgeEntry | null {
   const normalizedInput = normalizeText(input);
   const tokens = new Set(tokenize(input));
   if (tokens.size === 0) return null;
@@ -431,14 +991,39 @@ export function findBestMatch(input: string, entries: KnowledgeEntry[] = getKnow
   let best: { entry: KnowledgeEntry; score: number } | null = null;
   for (const entry of entries) {
     let score = 0;
+    // Tokens that already scored an exact hit on *some* keyword in this
+    // entry are excluded from that same entry's fuzzy pass, so e.g. the
+    // token "service" can't score both an exact hit on keyword "service"
+    // and a second, fuzzy hit on the near-duplicate keyword "services" in
+    // the same entry, inflating one entry's total past a genuinely
+    // different topic that matched a single, real keyword.
+    const exactlyMatchedTokens = new Set(entry.keywords.filter((k) => !k.includes(' ') && tokens.has(k)));
+    const fuzzyCandidateTokens = Array.from(tokens).filter((t) => !exactlyMatchedTokens.has(t));
     for (const keyword of entry.keywords) {
       if (keyword.includes(' ')) {
         if (normalizedInput.includes(keyword)) score += 3 * (entry.weight ?? 1);
       } else if (tokens.has(keyword)) {
         score += entry.weight ?? 1;
+      } else if (fuzzyKeywordHit(keyword, fuzzyCandidateTokens)) {
+        // Typo tolerance ("watre heater", "drin clog"): counts for less than
+        // an exact hit so a real match elsewhere always outranks a guess.
+        score += Math.max(1, (entry.weight ?? 1) - 1);
       }
     }
-    if (score > 0 && (!best || score > best.score)) {
+    // Small nudge (not a hard override) so a genuinely ambiguous question
+    // ("how much does it cost") leans toward the service/city the visitor
+    // is already reading about, without letting page context beat a clear,
+    // differently-scored match.
+    if (score > 0 && contextTopic && entry.topic === contextTopic) {
+      score += 1;
+    }
+    if (score > 0 && best) {
+      // On a tied score, a broad catchall entry loses to a specific one
+      // (see isCatchall doc comment) instead of silently winning just for
+      // appearing earlier in the array.
+      const winsOnTie = score === best.score && best.entry.isCatchall && !entry.isCatchall;
+      if (score > best.score || winsOnTie) best = { entry, score };
+    } else if (score > 0) {
       best = { entry, score };
     }
   }

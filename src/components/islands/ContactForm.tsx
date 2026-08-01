@@ -12,16 +12,7 @@ import {
   MessageSquare,
   CircleCheck,
   AlertTriangle,
-  HelpCircle,
-  Siren,
-  Flame,
-  Droplets,
-  Wrench,
-  Toilet,
-  Shovel,
-  Fuel,
-  ThermometerSun,
-  type LucideIcon
+  HelpCircle
 } from 'lucide-react';
 import { contactSchema, OTHER_SERVICE, type ContactFormValues } from '../../lib/contactSchema';
 import { zodResolver } from '../../lib/zodResolver';
@@ -29,11 +20,10 @@ import { business } from '../../data/business';
 import { services } from '../../data/services';
 import SpecularButton from './SpecularButton';
 import { specularPink } from '../../lib/specularPresets';
-
-const iconMap: Record<string, LucideIcon> = { Siren, Flame, Droplets, Wrench, Toilet, Shovel, Fuel, ThermometerSun };
+import { serviceIconMap } from '../../lib/serviceIcons';
 
 const serviceTiles = [
-  ...services.map((s) => ({ title: s.title, icon: iconMap[s.icon] })),
+  ...services.map((s) => ({ title: s.title, icon: serviceIconMap[s.icon] })),
   { title: 'Emergency / Not Sure', icon: AlertTriangle },
   { title: OTHER_SERVICE, icon: HelpCircle }
 ];
