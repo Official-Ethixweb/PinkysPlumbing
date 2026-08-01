@@ -274,22 +274,24 @@ export default function ContactForm() {
         )}
       </div>
 
-      <SpecularButton type="submit" disabled={isSubmitting} size="lg" className="group w-full" {...specularPink}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Sending&hellip;
-          </>
-        ) : (
-          <>
-            Send Request
-            <Send className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </>
-        )}
-      </SpecularButton>
-      <p className="text-ink-500 text-center text-xs">
-        We'll get back to you within one business day. For emergencies, please call {business.hotline.display}.
-      </p>
+      <div>
+        <SpecularButton type="submit" disabled={isSubmitting} size="lg" className="group w-full" {...specularPink}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Sending&hellip;
+            </>
+          ) : (
+            <>
+              Send Request
+              <Send className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            </>
+          )}
+        </SpecularButton>
+        <p className="text-ink-500 mt-4 text-center text-xs">
+          We'll get back to you within one business day. For emergencies, please call {business.hotline.display}.
+        </p>
+      </div>
     </form>
   );
 }

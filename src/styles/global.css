@@ -193,10 +193,10 @@
     border-color: var(--color-ink-200);
   }
   .glass-light {
-    background-color: color-mix(in oklab, white 72%, transparent);
+    background-color: color-mix(in oklab, white 94%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid color-mix(in oklab, white 50%, transparent);
+    border: 1px solid color-mix(in oklab, white 70%, transparent);
   }
 }
 

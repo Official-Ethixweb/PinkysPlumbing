@@ -54,22 +54,6 @@ const breadcrumbSchema = buildBreadcrumbSchema([
         </div>
 
         <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
-          <h2 class="font-display text-ink-900 text-lg font-bold">Call Your County Directly</h2>
-          <ul class="mt-4 space-y-3">
-            {
-              business.counties.map((c) => (
-                <li class="border-ink-100 flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                  <span class="text-ink-500 text-sm">{c.name}</span>
-                  <a href={`tel:${c.phoneTel}`} class="font-display text-ink-900 text-sm font-bold hover:text-pink-600">
-                    {c.phoneDisplay}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-
-        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
           <div class="flex items-center gap-3">
             <Clock className="size-5 text-teal-700" aria-hidden="true" />
             <p class="text-ink-700 text-sm">Open 24 hours a day, 7 days a week</p>
@@ -88,16 +72,6 @@ const breadcrumbSchema = buildBreadcrumbSchema([
             <p class="text-ink-700 text-sm">Licensed, bonded &amp; background-checked</p>
           </div>
         </div>
-
-        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
-          <h2 class="font-display text-ink-900 text-lg font-bold">Mailing Address</h2>
-          <p class="text-ink-600 mt-3 text-sm leading-relaxed">
-            {business.legalName}<br />
-            {business.streetAddress}<br />
-            {business.addressLocality}, {business.addressRegion}
-            {business.postalCode}
-          </p>
-        </div>
       </aside>
 
       <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-6 sm:p-9" data-reveal="right">
@@ -113,6 +87,36 @@ const breadcrumbSchema = buildBreadcrumbSchema([
         </div>
         <div class="mt-8">
           <ContactForm client:load />
+        </div>
+      </div>
+    </Container>
+
+    <Container class="mt-10">
+      <div class="grid gap-6 sm:grid-cols-2" data-reveal>
+        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
+          <h2 class="font-display text-ink-900 text-lg font-bold">Call Your County Directly</h2>
+          <ul class="mt-4 space-y-3">
+            {
+              business.counties.map((c) => (
+                <li class="border-ink-100 flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                  <span class="text-ink-500 text-sm">{c.name}</span>
+                  <a href={`tel:${c.phoneTel}`} class="font-display text-ink-900 text-sm font-bold hover:text-pink-600">
+                    {c.phoneDisplay}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="border-ink-100 shadow-card rounded-3xl border bg-white p-7">
+          <h2 class="font-display text-ink-900 text-lg font-bold">Mailing Address</h2>
+          <p class="text-ink-600 mt-3 text-sm leading-relaxed">
+            {business.legalName}<br />
+            {business.streetAddress}<br />
+            {business.addressLocality}, {business.addressRegion}
+            {business.postalCode}
+          </p>
         </div>
       </div>
     </Container>
