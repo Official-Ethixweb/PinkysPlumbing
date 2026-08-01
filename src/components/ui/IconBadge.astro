@@ -17,13 +17,51 @@ const sizes = {
   lg: 'size-16 [&>svg]:size-7'
 };
 
+/* Clay/glass 3D treatment: a diagonal two-stop gradient (not a flat tint)
+   for the "clay" body, plus a stacked box-shadow doing four jobs at once -
+   an inset top-left highlight (light hitting a rounded bevel), an inset
+   bottom-right shadow (the underside of that same bevel), an outer drop
+   shadow (the tile lifted off the card), and a soft tone-matched glow
+   (kept subtle - a wide, low-opacity spread reads as ambient glow instead
+   of neon). `white` keeps a light glassy variant since it sits over a
+   photo, not the card background, so a heavy pink gradient there would
+   fight the thumbnail underneath it. */
 const tones = {
-  pink: 'bg-pink-500/15 text-pink-400 ring-1 ring-inset ring-pink-500/25',
-  teal: 'bg-teal-500/15 text-teal-400 ring-1 ring-inset ring-teal-500/25',
-  white: 'bg-white text-pink-500 shadow-card'
+  pink: {
+    badge:
+      'text-pink-600 ring-1 ring-inset ring-pink-500/30 [background:linear-gradient(155deg,var(--color-pink-100)_0%,var(--color-pink-300)_55%,var(--color-pink-400)_100%)]',
+    shadow:
+      'shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-6px_10px_-4px_rgba(172,10,92,0.35),0_10px_20px_-8px_rgba(238,30,135,0.45),0_2px_6px_-1px_rgba(238,30,135,0.25)]'
+  },
+  teal: {
+    badge:
+      'text-teal-700 ring-1 ring-inset ring-teal-500/30 [background:linear-gradient(155deg,var(--color-teal-100)_0%,color-mix(in_oklab,var(--color-teal-400)_65%,white)_55%,var(--color-teal-400)_100%)]',
+    shadow:
+      'shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-6px_10px_-4px_rgba(10,74,90,0.35),0_10px_20px_-8px_rgba(28,124,140,0.45),0_2px_6px_-1px_rgba(28,124,140,0.25)]'
+  },
+  white: {
+    badge:
+      'text-pink-500 ring-1 ring-inset ring-white/60 [background:linear-gradient(155deg,white_0%,var(--color-pink-50)_100%)]',
+    shadow:
+      'shadow-[inset_0_1.5px_1.5px_rgba(255,255,255,0.9),inset_0_-4px_8px_-4px_rgba(238,30,135,0.15),0_10px_20px_-8px_rgba(11,13,16,0.25),0_2px_6px_-1px_rgba(11,13,16,0.12)]'
+  }
 };
+
+const t = tones[tone];
 ---
 
-<span class={cn('inline-flex shrink-0 items-center justify-center rounded-2xl', sizes[size], tones[tone], className)}>
-  <Icon aria-hidden="true" strokeWidth={2} />
+<span
+  class={cn(
+    'relative inline-flex shrink-0 items-center justify-center rounded-2xl transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5 group-hover:rotate-[-2deg]',
+    sizes[size],
+    t.badge,
+    t.shadow,
+    className
+  )}
+>
+  <Icon
+    aria-hidden="true"
+    strokeWidth={2.25}
+    className="[filter:drop-shadow(0_1px_1px_rgba(255,255,255,0.6))_drop-shadow(0_1.5px_0.5px_rgba(0,0,0,0.12))] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+  />
 </span>
