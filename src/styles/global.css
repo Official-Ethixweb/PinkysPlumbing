@@ -84,6 +84,8 @@
   --shadow-card-hover: 0 2px 4px rgba(11, 13, 16, 0.03), 0 16px 32px -10px rgba(11, 13, 16, 0.1);
 
   --animate-marquee: marquee 32s linear infinite;
+  /* Idle speed. Hovering the strip drops this to ~1/3 speed (~100s) via
+     playbackRate rather than a duration swap - see TestimonialsMarquee.astro. */
   --animate-marquee-ltr: marquee-ltr 36s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
   --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -191,6 +193,19 @@
     transform: translateY(-4px);
     box-shadow: var(--shadow-card-hover);
     border-color: var(--color-ink-200);
+  }
+  /* Pink halo behind a hovered card. Deliberately an extra box-shadow layer
+     rather than a blurred child div: `.card-elevated:hover` sets a transform,
+     which creates a stacking context, and inside one a negative-z-index child
+     paints above its parent's background - so a blurred child would wash over
+     the white card face instead of glowing behind it. Must stay after
+     `.card-elevated:hover`; both are (0,2,0) specificity, so source order is
+     what lets this override the plain shadow. */
+  .card-glow-pink:hover {
+    box-shadow:
+      var(--shadow-card-hover),
+      0 12px 46px -8px color-mix(in oklab, var(--color-pink-500) 55%, transparent),
+      0 0 20px -2px color-mix(in oklab, var(--color-pink-500) 30%, transparent);
   }
   .glass-light {
     background-color: color-mix(in oklab, white 94%, transparent);
