@@ -32,4 +32,34 @@ function initReveal(): void {
   targets.forEach((el) => io.observe(el));
 }
 
+// `astro:page-load` ONLY fires when Astro's ClientRouter (view transitions)
+// is enabled - this site does not use it, so listening for that event alone
+// meant initReveal() never ran: `io-ready` was never added, the CSS gate
+// (html.js.io-ready [data-reveal]) never engaged, and every [data-reveal]
+// element stayed at its un-animated default. Run on initial load too, and
+// keep the view-transition listener so this still works if ClientRouter is
+// added later. initReveal is idempotent - it only selects
+// `[data-reveal]:not(.is-revealed)` - so firing twice is harmless.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initReveal, { once: true });
+} else {
+  initReveal();
+}
+
+// `astro:page-load` ONLY fires when Astro's ClientRouter (view transitions)
+// is enabled - this site does not use it, so listening for that event alone
+// meant initReveal() never ran: `io-ready` was never added, the CSS gate
+// (html.js.io-ready [data-reveal]) never engaged, and every [data-reveal]
+// element stayed at its un-animated default (opacity:0 in the gated case,
+// but see also the site's default rule - the practical symptom was the hero
+// eyebrow badge and headline never fading in). Run on initial load too, and
+// keep the view-transition listener so this still works if ClientRouter is
+// added later. initReveal is idempotent - it only selects
+// `[data-reveal]:not(.is-revealed)` - so firing twice is harmless.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initReveal, { once: true });
+} else {
+  initReveal();
+}
+
 document.addEventListener('astro:page-load', initReveal);

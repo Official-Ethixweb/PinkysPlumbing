@@ -41,7 +41,12 @@ const { eyebrow, title, description, align = 'center', tone = 'light', class: cl
     description && (
       <p
         class={cn(
-          'max-w-2xl text-base leading-relaxed text-balance sm:text-lg',
+          'text-justify-body max-w-2xl text-base leading-relaxed sm:text-lg',
+          // Centred headings keep their final line centred; left-aligned ones
+          // let it fall flush left, matching the block above it.
+          // This heading is centred at EVERY width when align="center", so it
+          // uses the -always variant rather than the mobile-only one.
+          align === 'center' && 'text-justify-center-last-always',
           tone === 'light' ? 'text-ink-500' : 'text-white/70'
         )}
       >

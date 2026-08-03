@@ -6,8 +6,7 @@ import SpecularButton from '../islands/SpecularButton.tsx';
 import { business } from '../../data/business';
 import { services } from '../../data/services';
 import { coupons } from '../../data/coupons';
-import logo from '../../assets/images/logo-full.webp';
-import { Image } from 'astro:assets';
+import logo from '../../assets/images/logo-full.svg';
 import { specularPink } from '../../lib/specularPresets';
 
 const navLinks = [
@@ -45,16 +44,7 @@ const navLinks = [
   <div id="main-nav" class="border-b border-white/5 bg-teal-900/95 backdrop-blur-xl transition-shadow duration-300">
     <Container class="flex h-[76px] items-center justify-between gap-4">
       <a href="/" class="shrink-0" aria-label={`${business.name} - Home`}>
-        <Image
-          src={logo}
-          alt={business.name}
-          width={220}
-          height={44}
-          densities={[1, 2]}
-          quality="max"
-          class="h-9 w-auto sm:h-10"
-          loading="eager"
-        />
+        <img src={logo.src} alt={business.name} width={220} height={44} class="h-9 w-auto sm:h-10" loading="eager" />
       </a>
 
       <nav aria-label="Primary" class="hidden shrink-0 items-center lg:flex xl:gap-1">
@@ -103,6 +93,11 @@ const navLinks = [
       </nav>
 
       <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden sm:inline-flex">
+          <SpecularButton href="/contact-us/" size="md" {...specularPink} client:load>
+            Get a Free Estimate
+          </SpecularButton>
+        </div>
         <a
           href={`tel:${business.hotline.tel}`}
           class="font-display hidden items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold whitespace-nowrap text-white transition-colors hover:border-pink-400/50 hover:text-pink-300 md:flex lg:hidden xl:flex"
@@ -110,12 +105,6 @@ const navLinks = [
           <Phone className="size-4 text-pink-400" aria-hidden="true" />
           {business.hotline.display}
         </a>
-        <div class="hidden sm:inline-flex">
-          <SpecularButton href="/contact-us/" size="md" {...specularPink} client:idle>
-            Get a Free Estimate
-          </SpecularButton>
-        </div>
-
         <button
           id="mobile-menu-trigger"
           type="button"
@@ -138,7 +127,7 @@ const navLinks = [
   class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-teal-900 p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm open:flex open:flex-col"
 >
   <div class="flex h-16 items-center justify-between border-b border-white/10 px-5">
-    <Image src={logo} alt={business.name} width={180} height={36} densities={[1, 2]} quality="max" class="h-8 w-auto" />
+    <img src={logo.src} alt={business.name} width={180} height={36} class="h-8 w-auto" />
     <button
       id="mobile-menu-close"
       type="button"

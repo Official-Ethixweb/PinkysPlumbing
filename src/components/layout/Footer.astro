@@ -7,11 +7,7 @@ import SocialIcon from '../ui/SocialIcon.astro';
 import StaggerText from '../shared/StaggerText.astro';
 import { business } from '../../data/business';
 import { services } from '../../data/services';
-// .webp, not .svg: main's Footer imported logo-full.svg, but that file was
-// never committed - it only ever existed in one working tree, so a clean
-// checkout of main fails to build. Navbar already imports the tracked .webp;
-// this matches it. Swap both to .svg together if the vector is ever added.
-import logo from '../../assets/images/logo-full.webp';
+import logo from '../../assets/images/logo-full.svg';
 import { specularPink } from '../../lib/specularPresets';
 
 const year = new Date().getFullYear();
