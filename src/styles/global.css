@@ -128,6 +128,21 @@
   }
 }
 
+/* Registered so the angle can be interpolated. A plain custom property is an
+   untyped string to the animation engine, so the sweep would jump 0->360 in
+   one step instead of rotating. Must stay at top level - @property is invalid
+   inside @layer. */
+@property --glow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes glow-orbit {
+  to {
+    --glow-angle: 360deg;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -206,6 +221,44 @@
       var(--shadow-card-hover),
       0 12px 46px -8px color-mix(in oklab, var(--color-pink-500) 55%, transparent),
       0 0 20px -2px color-mix(in oklab, var(--color-pink-500) 30%, transparent);
+  }
+  /* Pink glow that travels around a photo's edge. The conic gradient is
+     painted on two pseudo-elements sitting just outside the photo: the opaque
+     photo covers the middle, so only the overhang shows as a moving ring, and
+     the blurred twin spills further out as the glow itself.
+     `isolation: isolate` matters - it gives the wrapper its own stacking
+     context so the pseudo-elements can sit under the photo without dropping
+     behind the section's white background. */
+  .photo-glow-ring {
+    position: relative;
+    isolation: isolate;
+  }
+  .photo-glow-ring > :where(img, picture) {
+    position: relative;
+    z-index: 1;
+  }
+  .photo-glow-ring::before,
+  .photo-glow-ring::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    z-index: 0;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--glow-angle),
+      transparent 0deg,
+      color-mix(in oklab, var(--color-pink-500) 90%, transparent) 35deg,
+      color-mix(in oklab, var(--color-pink-300) 85%, transparent) 60deg,
+      color-mix(in oklab, var(--color-pink-500) 70%, transparent) 85deg,
+      transparent 130deg,
+      transparent 360deg
+    );
+    animation: glow-orbit 6s linear infinite;
+  }
+  .photo-glow-ring::after {
+    inset: -14px;
+    opacity: 0.7;
+    filter: blur(22px);
   }
   .glass-light {
     background-color: color-mix(in oklab, white 94%, transparent);

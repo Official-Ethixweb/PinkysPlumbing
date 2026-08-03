@@ -1,5 +1,6 @@
 import { MapPin, Phone } from 'lucide-react';
 import CardSwap, { Card } from './CardSwap';
+import { countyThumbs, type CountySlug } from '../../data/serviceAreaMaps';
 
 export type CountyTone = 'pink' | 'teal' | 'gold';
 
@@ -9,6 +10,12 @@ export interface CountyCard {
   phoneTel: string;
   blurb: string;
   tone: CountyTone;
+}
+
+/** 'King County' -> 'king', to look up that county's real outline. */
+function countySlug(name: string): CountySlug | null {
+  const key = name.toLowerCase().replace(/\s*county$/, '') as CountySlug;
+  return key in countyThumbs ? key : null;
 }
 
 const TONE_STYLES: Record<CountyTone, { icon: string; badge: string; wash: string }> = {
@@ -45,17 +52,43 @@ export default function CountyCardStack({ counties }: CountyCardStackProps) {
     >
       {counties.map((county) => {
         const tone = TONE_STYLES[county.tone];
+        const slug = countySlug(county.name);
+        const thumb = slug ? countyThumbs[slug] : null;
         return (
           <Card
             key={county.name}
             className={`border-ink-100 flex flex-col justify-between overflow-hidden rounded-3xl border bg-white bg-gradient-to-br ${tone.wash} shadow-card-hover to-transparent p-7`}
           >
             <div>
-              <span
-                className={`inline-flex size-12 items-center justify-center rounded-2xl ring-1 ring-inset ${tone.badge}`}
-              >
-                <MapPin className={`size-5 ${tone.icon}`} aria-hidden="true" strokeWidth={2} />
-              </span>
+              <div className="flex items-start justify-between gap-4">
+                <span
+                  className={`inline-flex size-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset ${tone.badge}`}
+                >
+                  <MapPin className={`size-5 ${tone.icon}`} aria-hidden="true" strokeWidth={2} />
+                </span>
+                {/* That county's real outline, from Census boundary data.
+                    aria-hidden: the county is already named in the heading
+                    below, so this is decoration, not information. */}
+                {thumb && (
+                  <svg
+                    viewBox={thumb.viewBox}
+                    className="h-[68px] w-[82px] shrink-0 overflow-visible"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      d={thumb.d}
+                      fill="var(--color-pink-500)"
+                      fillOpacity="0.16"
+                      stroke="var(--color-pink-500)"
+                      strokeOpacity="0.85"
+                      strokeWidth="1.75"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                )}
+              </div>
               <h3 className="font-display text-ink-900 mt-5 text-xl font-bold">{county.name}</h3>
               <p className="text-ink-500 mt-2 text-sm leading-relaxed">{county.blurb}</p>
             </div>
