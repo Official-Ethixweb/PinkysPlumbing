@@ -1,17 +1,13 @@
 ---
-import { Phone, MapPin, Clock, ArrowRight } from 'lucide-react';
+import { Phone, MapPin, Clock } from 'lucide-react';
 import Container from '../ui/Container.astro';
 import Button from '../ui/Button.astro';
 import SpecularButton from '../islands/SpecularButton.tsx';
 import SocialIcon from '../ui/SocialIcon.astro';
 import RotatingText from '../islands/RotatingText.tsx';
-import { business, serviceAreas } from '../../data/business';
+import { business } from '../../data/business';
 import { services } from '../../data/services';
-import { cityPages } from '../../data/cityPages';
-
-const featuredSlugs = new Map(cityPages.map((c) => [c.name, c.slug]));
-import logo from '../../assets/images/logo-full.webp';
-import { Image } from 'astro:assets';
+import logo from '../../assets/images/logo-full.svg';
 import { specularPink } from '../../lib/specularPresets';
 
 const year = new Date().getFullYear();
@@ -60,15 +56,7 @@ const companyLinks = [
   <Container class="grid grid-cols-2 gap-x-8 gap-y-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.1fr]">
     <div class="col-span-2 lg:col-span-1">
       <a href="/" aria-label={`${business.name} - Home`}>
-        <Image
-          src={logo}
-          alt={business.name}
-          width={200}
-          height={40}
-          densities={[1, 2]}
-          quality="max"
-          class="h-9 w-auto"
-        />
+        <img src={logo.src} alt={business.name} width={240} height={48} class="h-[2.7rem] w-auto" />
       </a>
       <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
         Seattle's 24-hour residential &amp; commercial plumbers. Honest pricing, licensed technicians, and a promise to
@@ -139,40 +127,6 @@ const companyLinks = [
       </p>
     </div>
   </Container>
-
-  <!-- Service area -->
-  <div class="border-t border-white/5 py-10">
-    <Container>
-      <p class="font-display text-center text-sm font-bold tracking-wider text-white/70 uppercase">
-        Proudly Serving the Greater Seattle Area
-      </p>
-      <ul class="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-x-5 gap-y-2.5">
-        {
-          serviceAreas.map((city) => {
-            const slug = featuredSlugs.get(city);
-            return (
-              <li class="text-xs text-white/60">
-                <a
-                  href={slug ? `/service-area/${slug}/` : '/service-area/'}
-                  class="transition-colors hover:text-pink-400"
-                >
-                  {city}
-                </a>
-              </li>
-            );
-          })
-        }
-      </ul>
-      <div class="mt-5 flex justify-center">
-        <a
-          href="/service-area/"
-          class="inline-flex items-center gap-1 text-xs font-semibold text-pink-300 hover:text-pink-200"
-        >
-          View full service area <ArrowRight className="size-3.5" aria-hidden="true" />
-        </a>
-      </div>
-    </Container>
-  </div>
 
   <div class="border-t border-white/5 py-6">
     <Container

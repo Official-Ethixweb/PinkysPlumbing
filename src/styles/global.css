@@ -1,7 +1,12 @@
 @import 'tailwindcss';
 
+/* Instrument Sans is now the single family for BOTH headings and body
+   (supplied design system). Only the latin wght axis is pulled in - the
+   wdth/italic/latin-ext files in the package stay unreferenced, so one
+   variable woff2 covers every weight the site uses with no extra requests.
+   Inter's import is intentionally gone: keeping it would have shipped a
+   second font file for a family nothing renders in anymore. */
 @import '@fontsource-variable/instrument-sans/wght.css';
-@import '@fontsource-variable/inter/wght.css';
 
 /* ------------------------------------------------------------------
    Design tokens — light premium facelift.
@@ -11,35 +16,56 @@
 ------------------------------------------------------------------ */
 @theme {
   --font-display: 'Instrument Sans Variable', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Same family as display, per the supplied design system. Kept as a
+     separate token (rather than deleting it and rewriting every
+     font-body reference) so the two roles can diverge again later
+     without another sitewide sweep. NOTE: the variable font's weight
+     axis is 400-700 - do not use font-extrabold/900 on it, the browser
+     will synthesize a faux-bold. Use font-bold (700) as the heaviest. */
+  --font-body: 'Instrument Sans Variable', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
 
-  /* Brand pink, sampled from the existing Pinky's logo/CTA pink,
-     extended into a full scale for depth (gradients, hover states).
-     pink-350 is the literal brand accent hex (#F37DBB) — reserved for
-     soft badge/chip fills, borders, and glow tint on light surfaces.
-     pink-600 is kept in the scale (still used for hover/outline/icon
-     accents) but is NO LONGER the solid CTA fill - superseded by
-     pink-cta below, on request. Because pink-cta is light, CTA text on
-     it must be a dark color (teal-900), not white - white-on-pink-600
-     had a verified 5.2:1 contrast ratio; white-on-pink-cta would be
-     ~2.3:1 and fail WCAG AA. Don't pair pink-cta with white text. */
+  /* ---- Supplied brand palette (2026-08 design system) ----
+     The four official hexes are anchored here as named tokens and
+     mirrored into the numeric scale at their nearest slots, so both
+     `bg-brand-pink` and the existing `bg-pink-350` utilities resolve to
+     the same ink. The rest of the scale is retained for depth
+     (gradients, hover, dark-on-light text) - those are derived shades,
+     not competing brand colors.
+
+     CONTRAST RULE (do not "fix" by switching to white):
+     brand pink #F37FB5 carries white text at only ~2.4:1, which fails
+     WCAG AA. Every solid-pink CTA therefore uses DARK TEAL text
+     (#002834, ~8.9:1) - verified, and matched to the supplied CTA
+     reference's shape/weight rather than its literal label color.
+     pink-600+ are the only pinks dark enough for white text (5.2:1). */
   --color-pink-50: #fff1f8;
   --color-pink-100: #ffe0f0;
   --color-pink-200: #ffbfe1;
-  --color-pink-300: #ff8dc9;
-  --color-pink-350: #f37dbb;
+  --color-pink-300: #f6b7d2; /* = brand Light Pink */
+  --color-pink-350: #f37fb5; /* = brand Primary Pink */
   --color-pink-400: #fa56ac;
   --color-pink-500: #ee1e87;
   --color-pink-600: #d10e72;
   --color-pink-700: #ac0a5c;
   --color-pink-800: #870a49;
   --color-pink-900: #650a39;
-  /* Exact swatch requested for solid CTA button fills (#F189BA / rgb(241,137,186)). */
-  --color-pink-cta: #f189ba;
+  /* Solid CTA fill. Now the official brand pink (was #F189BA) so filled
+     buttons and pink accents are one consistent color sitewide. Still
+     light -> still pairs with teal-950 text, never white. */
+  --color-pink-cta: #f37fb5;
   --color-pink-950: #3d0421;
 
-  /* Deep teal: the brand's #004056 anchored at teal-900, used for
-     navbar, footer, trust bands, and alternating dark sections. */
+  /* Semantic aliases - prefer these in new work over numeric slots. */
+  --color-brand-pink: #f37fb5;
+  --color-brand-pink-light: #f6b7d2;
+  --color-brand-teal: #004158;
+  --color-brand-teal-dark: #002834;
+
+  /* Deep teal: brand Primary Teal #004158 at teal-900 (navbar, footer,
+     trust bands, dark sections) and Dark Teal #002834 at teal-950
+     (deepest surfaces + the text color used on pink CTA fills). Both
+     shifted a hair from the previous #004056/#002733 to match the
+     supplied swatches exactly. */
   --color-teal-50: #eefbfa;
   --color-teal-100: #d1f3f1;
   --color-teal-400: #2c9aa8;
@@ -47,8 +73,8 @@
   --color-teal-600: #146372;
   --color-teal-700: #124f5c;
   --color-teal-800: #0a4a5a;
-  --color-teal-900: #004056;
-  --color-teal-950: #002733;
+  --color-teal-900: #004158; /* = brand Primary Teal */
+  --color-teal-950: #002834; /* = brand Dark Teal */
 
   /* Ink: near-black neutral for headings/overlays (the 5% "black"
      share) and soft grays for body text on light surfaces. */
@@ -176,6 +202,44 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Justified body copy: flush on BOTH edges so paragraphs read as clean
+     blocks rather than ragged-right.
+     `hyphens: auto` is not optional here - justification works by stretching
+     the word-gaps in a line, so on a narrow phone column an unhyphenated
+     paragraph opens up wide "rivers" of whitespace (worst on lines holding a
+     long word like "replacement"). Allowing breaks inside long words keeps
+     the extra space spread thinly instead.
+     `text-wrap` is reset to `auto` because `balance`/`pretty` fight
+     justification: balance optimises for even line LENGTHS, which is exactly
+     what justify then overrides, and the two together produce a short, badly
+     stretched last-but-one line. */
+  .text-justify-body {
+    text-align: justify;
+    text-wrap: auto;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    text-justify: inter-word;
+  }
+
+  /* The last line of a justified block is never stretched, so a centred
+     layout ends up with a flush-left orphan under centred headings. Keeping
+     the final line centred is what makes justification sit correctly inside
+     the centred mobile sections.
+     Scoped to below `lg` because the sections this is used in only centre
+     their text on mobile - from lg up they return to a left-aligned column,
+     where a centred last line would be the thing that looks wrong. Sections
+     that are centred at every width (SectionHeading) opt in separately via
+     .text-justify-center-last-always. */
+  @media (width < 64rem) {
+    .text-justify-body.text-justify-center-last {
+      text-align-last: center;
+    }
+  }
+
+  .text-justify-body.text-justify-center-last-always {
+    text-align-last: center;
+  }
   .container-px {
     padding-inline: clamp(1.25rem, 4vw, 3rem);
   }
@@ -194,18 +258,11 @@
     box-shadow: var(--shadow-card-hover);
     border-color: var(--color-ink-200);
   }
-  /* Pink halo behind a hovered card. Deliberately an extra box-shadow layer
-     rather than a blurred child div: `.card-elevated:hover` sets a transform,
-     which creates a stacking context, and inside one a negative-z-index child
-     paints above its parent's background - so a blurred child would wash over
-     the white card face instead of glowing behind it. Must stay after
-     `.card-elevated:hover`; both are (0,2,0) specificity, so source order is
-     what lets this override the plain shadow. */
-  .card-glow-pink:hover {
-    box-shadow:
-      var(--shadow-card-hover),
-      0 12px 46px -8px color-mix(in oklab, var(--color-pink-500) 55%, transparent),
-      0 0 20px -2px color-mix(in oklab, var(--color-pink-500) 30%, transparent);
+  .card-elevated.card-border-pink {
+    border-color: color-mix(in oklab, var(--color-pink-350) 50%, transparent);
+  }
+  .card-elevated.card-border-pink:hover {
+    border-color: var(--color-pink-400);
   }
   .glass-light {
     background-color: color-mix(in oklab, white 94%, transparent);

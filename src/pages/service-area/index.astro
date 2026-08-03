@@ -50,7 +50,11 @@ const trustPoints = [
     imageAlt="Pinky's Plumbing technician working on a sewer line repair"
   />
 
-  <section class="bg-white py-16 sm:py-24">
+  <!-- Extra bottom padding on lg+: the CountyCardStack animates its cards
+       ~22px below the wrapper's box, and without this they printed over the
+       "Cities We Serve" heading in the next section. Only needed at lg+,
+       where the stack sits in its own grid column. -->
+  <section class="bg-white py-16 sm:py-24 lg:pb-32">
     <Container class="grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
       <div data-reveal="left">
         <Eyebrow>Local Coverage</Eyebrow>
@@ -79,13 +83,36 @@ const trustPoints = [
         </div>
       </div>
 
-      <div class="relative mx-auto h-[320px] w-full max-w-[420px] sm:h-[380px] lg:mx-0" data-reveal="right">
+      <!-- Height restored to the original. Enlarging this does NOT fix the
+           card spill: CardSwap positions each card at verticalDistance=48
+           offsets from a height:100% base, so a taller wrapper just pushes
+           the lowest card further down (380px -> 22px spill, 430px -> 47px).
+           The vertical clearance belongs on the section's padding instead.
+
+           HORIZONTAL sizing: CardSwap fans each card ~44px right of the one
+           beneath it, so the rendered stack is wider than a single card -
+           measured, the fan ends 41px past a 560px box at every desktop
+           width. Padding the box by that amount keeps the fan inside it,
+           which is what stops the page picking up a horizontal scrollbar at
+           1024/1280 without clipping the cards themselves (an earlier
+           attempt clipped a 420px box and sliced all three cards).
+           On mobile the box stays viewport-width and DOES clip: the fan
+           would otherwise push 155px past the screen edge and give the page
+           a real horizontal scrollbar (scrollWidth 545 vs 390).
+           `clip` not `hidden`: it must not become a scroll container. -->
+      <div
+        class="card-stack-wrap relative mx-auto h-[320px] w-full max-w-[420px] overflow-x-clip sm:h-[380px] lg:mx-0 lg:max-w-[620px] lg:overflow-x-visible"
+        data-reveal="right"
+      >
         <CountyCardStack client:visible counties={countyCards} />
       </div>
     </Container>
   </section>
 
-  <section class="border-ink-100 border-t bg-mist-100 pb-20 sm:pb-28">
+  <!-- pt-* added: this section previously had bottom padding only, so its
+       heading sat flush against the section boundary with no breathing
+       room under the card stack above. -->
+  <section class="border-ink-100 border-t bg-mist-100 pt-16 pb-20 sm:pt-20 sm:pb-28">
     <Container class="mx-auto max-w-4xl text-center" data-reveal>
       <h2 class="font-display text-ink-900 text-2xl font-bold sm:text-3xl">Cities We Serve</h2>
       <p class="text-ink-500 mx-auto mt-3 max-w-lg">
@@ -123,3 +150,34 @@ const trustPoints = [
     </Container>
   </section>
 </BaseLayout>
+
+<style>
+  /* CardSwap fans its cards ~44px to the right of each other, so the
+     rendered stack is wider than one card. Below lg the wrapper is only as
+     wide as the viewport allows, and the fan overran it by ~55px at 390px -
+     clipping alone left the right-hand cards visibly sliced.
+     Scaling the whole stack down from its left edge fits the fan inside the
+     box instead of cutting it, and keeps all three cards fully readable. */
+  @media (max-width: 1023px) {
+    .card-stack-wrap :global(.card-swap-container) {
+      transform: scale(0.82);
+      transform-origin: left center;
+    }
+  }
+  @media (max-width: 400px) {
+    .card-stack-wrap :global(.card-swap-container) {
+      transform: scale(0.72);
+    }
+  }
+
+  /* 1024-1279: the grid COLUMN is the binding constraint here, not the
+     wrapper's max-width - lg:max-w-[620px] had no effect and the fan still
+     ran 41-49px past the column, giving the page a horizontal scrollbar.
+     Scaling the stack fits it inside the column without slicing a card. */
+  @media (min-width: 1024px) and (max-width: 1365px) {
+    .card-stack-wrap :global(.card-swap-container) {
+      transform: scale(0.84);
+      transform-origin: left center;
+    }
+  }
+</style>

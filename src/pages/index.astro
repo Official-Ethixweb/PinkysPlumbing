@@ -8,6 +8,7 @@ import WhyChooseUs from '../components/sections/WhyChooseUs.astro';
 import PromiseBanner from '../components/sections/PromiseBanner.astro';
 import SplitFeature from '../components/sections/SplitFeature.astro';
 import TeamBand from '../components/sections/TeamBand.astro';
+import ServiceAreaMap from '../components/sections/ServiceAreaMap.astro';
 import FAQ from '../components/sections/FAQ.astro';
 import clientHandshake from '../assets/images/client-handshake.webp';
 import emergencyHelp from '../assets/images/emergency-call-help.webp';
@@ -54,5 +55,6 @@ const faqSchema = {
     cta={{ label: 'Request Service', href: '/contact-us/', showPhone: true }}
   />
   <TeamBand />
+  <ServiceAreaMap tone="mist" />
   <FAQ items={generalFaq} />
 </BaseLayout>
