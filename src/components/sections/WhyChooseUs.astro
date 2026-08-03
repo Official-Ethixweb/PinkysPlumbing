@@ -40,8 +40,8 @@ const stats = [
       </div>
     </div>
 
-    <div data-reveal="right">
-      <Eyebrow>Why Choose Pinky's?</Eyebrow>
+    <div class="max-lg:flex max-lg:flex-col max-lg:items-center max-lg:text-center" data-reveal="right">
+      <Eyebrow class="max-lg:justify-center">Why Choose Pinky's?</Eyebrow>
       <h2
         class="font-display text-ink-900 mt-4 text-3xl leading-[1.1] font-bold text-balance sm:text-4xl md:text-[2.75rem]"
       >
@@ -57,16 +57,19 @@ const stats = [
           splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
         />
       </h2>
-      <p class="text-ink-600 mt-5 max-w-lg leading-relaxed text-balance">
+      <p class="text-ink-600 text-justify-body text-justify-center-last mt-5 max-w-lg leading-relaxed">
         If you need plumbing help in the Seattle area, chances are someone you know already recommends Pinky's. Families
         and business owners count on us because we're licensed, background-checked, and available around the clock, day
         or night.
       </p>
 
-      <dl class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-2">
+      <dl class="mt-10 grid w-full grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-2">
         {
+          /* The pink accent switches from a left border to a top border below
+             lg: under centred text a left rule reads as a stray mark, while a
+             short top rule stays symmetric. */
           stats.map((s) => (
-            <div class="border-pink-350 border-l-2 pl-4">
+            <div class="border-pink-350 max-lg:border-t-2 max-lg:pt-3 max-lg:text-center lg:border-l-2 lg:pl-4">
               <dt class="sr-only">{s.label}</dt>
               <dd class="font-display text-ink-900 text-3xl font-bold">
                 <StatCounter value={s.value} suffix={s.suffix} client:visible />

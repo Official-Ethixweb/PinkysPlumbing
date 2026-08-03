@@ -368,6 +368,28 @@
   }
 }
 
+/* The reveal transforms shift elements horizontally by up to 24px BEFORE
+   they animate in. On a full-width element that transient offset extends
+   past the viewport and opens a horizontal scrollbar - measured 394px of
+   scroll width on a 390px viewport for the `data-reveal="right"` sidebar on
+   the service pages, on every narrow screen.
+   Clipping kills the stray 4px without affecting the animation itself
+   (which moves back to translateX(0)) and without needing a guard on each
+   individual element.
+
+   BOTH html and body need it: with the rule on <html> alone the page was
+   still scrollable 4px sideways, because <body> is the element that
+   actually establishes the scrolling box here.
+
+   `clip` rather than `hidden` on purpose - `hidden` turns the element into
+   a scroll container, which breaks the `position: sticky` sidebars on the
+   service pages and the sticky nav. `clip` does not, and both were
+   re-verified as still sticking after this change. */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* ------------------------------------------------------------------
    Accessibility widget (see src/components/islands/AccessibilityWidget.tsx)
 ------------------------------------------------------------------ */

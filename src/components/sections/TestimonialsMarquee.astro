@@ -4,7 +4,7 @@
  * `marquee-ltr` in global.css), no Swiper. The 3 real reviews are duplicated
  * once (the minimum a seamless loop needs); the duplicate copy is aria-hidden
  * so screen readers only ever hear each review once. The one bit of JS is the
- * hover slow-down at the bottom of this file.
+ * hover pause at the bottom of this file.
  */
 import TestimonialCard from './TestimonialCard.astro';
 import { testimonials } from '../../data/business';
@@ -35,14 +35,13 @@ import { testimonials } from '../../data/business';
 </div>
 
 <script>
-  // Hovering the strip slows the loop to ~1/3 speed instead of stopping it.
+  // Hovering the strip stops the loop so the reviews can be read.
   //
-  // Deliberately not `group-hover:[animation-duration:100s]`: a CSS duration
-  // swap recomputes progress from elapsed time, so the track snaps backwards
-  // the instant you hover (18s into a 36s loop is 50%, but 18s of 100s is
-  // 18%). updatePlaybackRate() keeps the current position and just changes
-  // how fast it advances from there, so the slow-down is seamless.
-  const HOVER_RATE = 0.36; // 36s idle => ~100s while hovered
+  // Deliberately not `group-hover:[animation-play-state:paused]`: that's a
+  // CSS-only pause and works fine on its own, but this file already uses the
+  // Web Animations API via getAnimations() for the card pop-up choreography,
+  // so pausing the same way keeps one code path instead of two.
+  const HOVER_RATE = 0; // fully stopped while hovered
 
   function initMarqueeHover() {
     document.querySelectorAll<HTMLElement>('[data-marquee]').forEach((wrap) => {

@@ -38,8 +38,11 @@ const { eyebrow, title, body, image, imageAlt, reverse = false, cta, tone = 'def
       />
     </div>
 
-    <div class={reverse ? 'lg:order-1' : ''} data-reveal={reverse ? 'left' : 'right'}>
-      <Eyebrow tone={tone === 'teal' ? 'dark' : 'light'}>{eyebrow}</Eyebrow>
+    <div
+      class:list={['max-lg:flex max-lg:flex-col max-lg:items-center max-lg:text-center', reverse ? 'lg:order-1' : '']}
+      data-reveal={reverse ? 'left' : 'right'}
+    >
+      <Eyebrow tone={tone === 'teal' ? 'dark' : 'light'} class="max-lg:justify-center">{eyebrow}</Eyebrow>
       <h2
         class:list={[
           'font-display mt-4 text-3xl leading-[1.1] font-bold text-balance sm:text-4xl',
@@ -59,12 +62,27 @@ const { eyebrow, title, body, image, imageAlt, reverse = false, cta, tone = 'def
         />
       </h2>
       <p
-        class:list={['mt-5 max-w-lg leading-relaxed text-balance', tone === 'teal' ? 'text-white/65' : 'text-ink-600']}
+        class:list={[
+          'text-justify-body text-justify-center-last mt-5 max-w-lg leading-relaxed',
+          tone === 'teal' ? 'text-white/65' : 'text-ink-600'
+        ]}
       >
         {body}
       </p>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <SpecularButton href={cta.href} size="lg" {...specularPink} client:visible>
+      <!-- CTA pair as a real 2-column grid rather than a flex-wrap row: equal
+           track widths plus `items-stretch` is what makes the two buttons come
+           out the SAME width and height, which flex-wrap could not guarantee
+           (SpecularButton sizes from its own CSS padding, Button from Tailwind
+           padding, so their intrinsic widths differ by ~20px). Stays 2-up at
+           every width - on phones the pair is capped at 24rem and centred so
+           the two cells never get too narrow for their labels. -->
+      <div
+        class:list={[
+          'mt-8 grid items-stretch gap-3',
+          cta.showPhone ? 'w-full max-w-sm grid-cols-2 lg:max-w-md' : 'w-full max-w-[14rem] grid-cols-1'
+        ]}
+      >
+        <SpecularButton href={cta.href} size="lg" {...specularPink} className="cta-cell" client:visible>
           {cta.label}
         </SpecularButton>
         {
@@ -75,12 +93,12 @@ const { eyebrow, title, body, image, imageAlt, reverse = false, cta, tone = 'def
                 variant="ghost"
                 size="lg"
                 icon={Phone}
-                class="border-2 border-white/15"
+                class="cta-cell border-2 border-white/15"
               >
                 {business.hotline.display}
               </Button>
             ) : (
-              <Button href={`tel:${business.hotline.tel}`} variant="outline" size="lg" icon={Phone}>
+              <Button href={`tel:${business.hotline.tel}`} variant="outline" size="lg" icon={Phone} class="cta-cell">
                 {business.hotline.display}
               </Button>
             ))
@@ -89,3 +107,31 @@ const { eyebrow, title, body, image, imageAlt, reverse = false, cta, tone = 'def
     </div>
   </Container>
 </section>
+
+<style>
+  /* The two CTAs come from different components - SpecularButton sizes from
+     its own stylesheet (1rem/2rem padding, 18px radius) and Button from
+     Tailwind utilities (py-4/px-8, fully rounded) - so left alone they render
+     at different heights (measured 48px vs 60px) and different widths.
+     Normalising here rather than in either component keeps the change local
+     to this paired layout, where matching is what's actually wanted.
+     `is()` raises specificity enough to beat .specular-button--lg. */
+  .cta-cell,
+  :global(a):is(.cta-cell) {
+    width: 100%;
+    min-height: 3.5rem;
+    padding-inline: 1rem;
+    border-radius: 9999px;
+    text-align: center;
+  }
+
+  /* Labels shrink a touch on the narrowest phones so both fit on one line
+     inside a half-width cell without the text wrapping or clipping. */
+  @media (width < 25rem) {
+    .cta-cell,
+    :global(a):is(.cta-cell) {
+      font-size: 0.875rem;
+      padding-inline: 0.625rem;
+    }
+  }
+</style>

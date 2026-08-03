@@ -29,8 +29,11 @@ const {
 
 <section class="bg-white py-20 sm:py-28">
   <Container class="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
-    <div class="lg:sticky lg:top-32 lg:self-start" data-reveal="left">
-      <Eyebrow>{eyebrow}</Eyebrow>
+    <div
+      class="max-lg:flex max-lg:flex-col max-lg:items-center max-lg:text-center lg:sticky lg:top-32 lg:self-start"
+      data-reveal="left"
+    >
+      <Eyebrow class="max-lg:justify-center">{eyebrow}</Eyebrow>
       <h2
         class="font-display text-ink-900 mt-4 text-4xl leading-[1.02] font-extrabold tracking-[-0.02em] text-balance sm:text-5xl"
       >
@@ -46,7 +49,9 @@ const {
           splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
         />
       </h2>
-      <p class="text-ink-500 mt-5 max-w-sm leading-relaxed text-balance">{description}</p>
+      <p class="text-ink-500 text-justify-body text-justify-center-last mt-5 max-w-sm leading-relaxed">
+        {description}
+      </p>
       <div class="mt-8">
         <Button href={`tel:${business.hotline.tel}`} variant="outline" size="lg" icon={Phone}>
           {business.hotline.display}
@@ -72,7 +77,7 @@ const {
                 />
               </span>
             </summary>
-            <p class="text-ink-500 mt-4 max-w-2xl text-[15px] leading-relaxed">{item.answer}</p>
+            <p class="text-ink-500 text-justify-body mt-4 max-w-2xl text-[15px] leading-relaxed">{item.answer}</p>
           </details>
         ))
       }

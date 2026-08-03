@@ -26,3 +26,10 @@ pnpm-debug.log*
 # raw source video (100MB+, exceeds GitHub's file size limit) - kept
 # locally only; hero-skyline-loop.webp in public/ is the deployed asset
 source-media/
+
+# local QA/scratch artifacts
+*.tmp.json
+*.tmp.cjs
+
+# working folder of raw screenshots/downloads, not site assets
+public/new updates/
