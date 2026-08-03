@@ -152,6 +152,17 @@ export default function SpecularButton({
     const fx = fxRef.current;
     if (!btn || !fx) return;
 
+    // Skip the WebGL context on coarse-pointer (touch) devices: the whole
+    // effect is a cursor-following specular highlight (`followMouse` drives
+    // it via `pointermove`), so on a device with no hover/mouse it can only
+    // ever sit at its idle autonomous rotation - all cost (context init,
+    // per-frame render, the button's own ~500ms of JS scripting per
+    // instance, measured via Lighthouse's bootup-time audit), no
+    // interactive payoff. The plain CSS button (background/shadow/hover
+    // states in SpecularButton.css) already looks complete without it, so
+    // this is a pure cost cut, not a visual regression, on phones/tablets.
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+
     const dpr = window.devicePixelRatio || 1;
     const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr });
     const gl = renderer.gl;

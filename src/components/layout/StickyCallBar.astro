@@ -6,7 +6,7 @@ import { specularPink } from '../../lib/specularPresets';
 ---
 
 <div
-  class="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-white/10 bg-teal-900/95 p-3 backdrop-blur-xl lg:hidden"
+  class="z-sticky fixed inset-x-0 bottom-0 flex gap-2 border-t border-white/10 bg-teal-900/95 p-3 backdrop-blur-xl lg:hidden"
   style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));"
 >
   <div class="flex-1">
@@ -15,7 +15,7 @@ import { specularPink } from '../../lib/specularPresets';
       size="md"
       className="w-full !py-3.5"
       {...specularPink}
-      client:load
+      client:idle
     >
       <Phone className="size-4" aria-hidden="true" />
       Call Now

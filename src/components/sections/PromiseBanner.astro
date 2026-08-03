@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import { CircleCheck } from 'lucide-react';
 import Container from '../ui/Container.astro';
 import Eyebrow from '../ui/Eyebrow.astro';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import handshake from '../../assets/images/handshake-wide.webp';
 import { promise } from '../../data/business';
 ---
@@ -28,17 +28,11 @@ import { promise } from '../../data/business';
       <div class="flex flex-col items-center text-center">
         <Eyebrow>Seattle Plumbers You Can Trust</Eyebrow>
         <h2 class="font-display text-ink-900 mt-4 text-3xl font-bold text-balance sm:text-4xl">
-          <RotatingText
-            client:visible
-            texts={['At Pinky’s, We Promise…']}
-            auto={false}
-            animatePresenceInitial={true}
-            splitBy="words"
+          <StaggerText
+            text="At Pinky’s, We Promise…"
             staggerDuration={0.04}
-            staggerFrom="first"
-            transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-            splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
-            mainClassName="justify-center"
+            wordClass="overflow-hidden pb-0.5 sm:pb-1"
+            class="justify-center"
           />
         </h2>
       </div>

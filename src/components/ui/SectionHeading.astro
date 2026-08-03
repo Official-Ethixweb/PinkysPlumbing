@@ -1,6 +1,6 @@
 ---
 import Eyebrow from './Eyebrow.astro';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -30,17 +30,11 @@ const { eyebrow, title, description, align = 'center', tone = 'light', class: cl
       tone === 'light' ? 'text-ink-900' : 'text-white'
     )}
   >
-    <RotatingText
-      client:visible
-      texts={[title]}
-      auto={false}
-      animatePresenceInitial={true}
-      splitBy="words"
+    <StaggerText
+      text={title}
       staggerDuration={0.04}
-      staggerFrom="first"
-      transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-      splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
-      mainClassName={align === 'center' ? 'justify-center' : undefined}
+      wordClass="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+      class={align === 'center' ? 'justify-center' : undefined}
     />
   </h2>
   {

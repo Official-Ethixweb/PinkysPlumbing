@@ -87,6 +87,37 @@
   --animate-marquee-ltr: marquee-ltr 36s linear infinite;
   --animate-float: float 6s ease-in-out infinite;
   --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  /* Layer scale: every fixed/sticky element in the site picks one of these,
+     never a raw number. Gaps are left between tiers for future insertions
+     without renumbering everything. */
+  --z-index-sticky: 40; /* StickyCallBar (mobile bottom bar) */
+  --z-index-widget-tab: 45; /* Coupon/Accessibility edge tabs, A11y mobile launcher */
+  --z-index-widget-backdrop: 44; /* Coupon's mobile-only dialog backdrop */
+  --z-index-widget-panel: 46; /* The three large floating panels + Chat's launcher/teaser stack */
+  --z-index-header: 50; /* Navbar */
+  --z-index-modal: 70; /* reserved for a true modal, none exists yet */
+  --z-index-skiplink: 100; /* Skip-to-content focus target */
+}
+
+/* ------------------------------------------------------------------
+   Overlay/floating-panel viewport-safe sizing. Computed once here so
+   CouponWidget/AccessibilityWidget/ChatWidget all size against the same
+   real header + StickyCallBar footprint instead of independent magic
+   numbers (72vh, 100dvh-120px, etc.) that drift out of sync with each
+   other and with the actual layout.
+------------------------------------------------------------------ */
+:root {
+  --header-h: 76px; /* mobile: Navbar's h-[76px] nav row only */
+  --sticky-bar-h: 72px; /* StickyCallBar's rendered height incl. padding, mobile-only */
+  --overlay-safe-top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 12px);
+  --overlay-safe-bottom: calc(var(--sticky-bar-h) + env(safe-area-inset-bottom, 0px) + 12px);
+}
+@media (min-width: 64rem) {
+  :root {
+    --header-h: 112px; /* desktop: 36px utility bar + 76px nav row */
+    --sticky-bar-h: 0px; /* StickyCallBar is lg:hidden */
+  }
 }
 
 @keyframes marquee {
@@ -373,6 +404,10 @@ html.a11y-reduce-motion *::after {
   scroll-behavior: auto !important;
 }
 
+/* Intentional escape hatch: these two must sit above absolutely everything
+   on the page, including --z-modal and every widget panel, since they're
+   cursor-tracking overlays meant to work no matter what else is open. Not
+   part of the --z-* scale — do not lower this to a token value. */
 .a11y-reading-guide-bar {
   position: fixed;
   left: 0;

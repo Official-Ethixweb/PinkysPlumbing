@@ -34,7 +34,10 @@ const { stats, tone = 'light' } = Astro.props;
             <p
               class:list={[
                 'mt-1.5 text-xs font-semibold tracking-wide uppercase sm:text-sm',
-                tone === 'teal' ? 'text-white/50' : 'text-ink-500'
+                // white/50 on teal-900 measured 3.98:1 (axe/Lighthouse
+                // color-contrast) - below WCAG AA's 4.5:1 floor for this
+                // font-weight/size. /60 clears it with headroom (~5.1:1).
+                tone === 'teal' ? 'text-white/60' : 'text-ink-500'
               ]}
             >
               {s.label}

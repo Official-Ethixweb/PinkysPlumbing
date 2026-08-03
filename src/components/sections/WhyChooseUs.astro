@@ -4,7 +4,7 @@ import Container from '../ui/Container.astro';
 import Eyebrow from '../ui/Eyebrow.astro';
 import Button from '../ui/Button.astro';
 import StatCounter from '../islands/StatCounter.tsx';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import techImage from '../../assets/images/service-water-heaters.webp';
 
 const stats = [
@@ -45,17 +45,7 @@ const stats = [
       <h2
         class="font-display text-ink-900 mt-4 text-3xl leading-[1.1] font-bold text-balance sm:text-4xl md:text-[2.75rem]"
       >
-        <RotatingText
-          client:visible
-          texts={["Pinky's to the Rescue"]}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
-          staggerDuration={0.04}
-          staggerFrom="first"
-          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
-        />
+        <StaggerText text="Pinky's to the Rescue" staggerDuration={0.04} wordClass="overflow-hidden pb-0.5 sm:pb-1" />
       </h2>
       <p class="text-ink-600 mt-5 max-w-lg leading-relaxed text-balance">
         If you need plumbing help in the Seattle area, chances are someone you know already recommends Pinky's. Families

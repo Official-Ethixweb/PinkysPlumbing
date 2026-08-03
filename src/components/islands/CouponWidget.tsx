@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { coupons, type Coupon } from '../../data/coupons';
 import { business } from '../../data/business';
+import { setOverlayCloser, registerOverlayOpen, registerOverlayClosed } from '../../lib/overlayCoordinator';
 
 const iconMap: Record<Coupon['icon'], LucideIcon> = { Flame, Droplets, Shovel, Wrench, ThermometerSun, Sparkles };
 
@@ -83,6 +84,16 @@ export default function CouponWidget() {
     if (open) headingRef.current?.focus();
   }, [open]);
 
+  // Register with the shared overlay coordinator so opening Coupons while
+  // Accessibility or Chat is open closes the other one instead of overlapping.
+  useEffect(() => {
+    setOverlayCloser('coupon', () => setOpen(false));
+  }, []);
+  useEffect(() => {
+    if (open) registerOverlayOpen('coupon');
+    else registerOverlayClosed('coupon');
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -109,7 +120,7 @@ export default function CouponWidget() {
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed inset-0 z-[39] bg-black/50 backdrop-blur-[2px] lg:hidden"
+            className="z-widget-backdrop fixed inset-0 bg-black/50 backdrop-blur-[2px] lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -125,7 +136,7 @@ export default function CouponWidget() {
         aria-expanded={open}
         aria-controls="coupon-panel"
         onClick={() => setOpen((v) => !v)}
-        className={`shadow-glow-pink fixed top-1/2 left-0 z-40 hidden w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl border border-l-0 border-white/15 bg-gradient-to-b from-pink-500 to-pink-700 py-5 text-white transition-[width,padding] duration-300 hover:w-14 lg:flex ${open ? '' : 'animate-float'}`}
+        className={`shadow-glow-pink z-widget-tab fixed top-1/2 left-0 hidden w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl border border-l-0 border-white/15 bg-gradient-to-b from-pink-500 to-pink-700 py-5 text-white transition-[width,padding] duration-300 hover:w-14 lg:flex ${open ? '' : 'animate-float'}`}
       >
         {open ? (
           <X className="size-4 shrink-0" aria-hidden="true" />
@@ -153,7 +164,7 @@ export default function CouponWidget() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="border-ink-100 fixed inset-x-3 top-1/2 z-40 flex max-h-[min(600px,calc(100dvh-120px))] -translate-y-1/2 flex-col overflow-hidden rounded-3xl border bg-white shadow-2xl shadow-black/15 lg:inset-x-auto lg:top-1/2 lg:left-12 lg:max-h-[min(600px,calc(100dvh-160px))] lg:w-[calc(100vw-3rem)] lg:max-w-[400px] lg:rounded-l-none lg:rounded-r-3xl lg:border-l-0"
+            className="border-ink-100 z-widget-panel fixed inset-x-3 top-1/2 flex max-h-[min(600px,calc(100dvh-var(--overlay-safe-top)-var(--overlay-safe-bottom)))] -translate-y-1/2 flex-col overflow-hidden rounded-3xl border bg-white shadow-2xl shadow-black/15 lg:inset-x-auto lg:top-1/2 lg:left-12 lg:w-[calc(100vw-3rem)] lg:max-w-[400px] lg:rounded-l-none lg:rounded-r-3xl lg:border-l-0"
           >
             <div className="border-ink-100 shrink-0 border-b bg-gradient-to-br from-pink-50 to-transparent px-6 py-5">
               <p className="font-display flex items-center gap-2 text-xs font-bold tracking-wider text-pink-600 uppercase">

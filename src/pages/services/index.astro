@@ -35,7 +35,7 @@ const breadcrumbSchema = buildBreadcrumbSchema([
     <Container>
       <Reveal as="div" class="grid grid-cols-1 gap-6 md:grid-cols-2" step={60}>
         {
-          services.map((s) => {
+          services.map((s, i) => {
             const Icon = iconMap[s.icon];
             return (
               <article
@@ -51,6 +51,8 @@ const breadcrumbSchema = buildBreadcrumbSchema([
                     height={410}
                     densities={[1, 2]}
                     quality="high"
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={i === 0 ? 'high' : 'auto'}
                     class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div class="from-ink-950 via-ink-950/10 absolute inset-0 bg-gradient-to-t to-transparent" />

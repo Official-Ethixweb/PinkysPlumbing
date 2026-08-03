@@ -1,0 +1,101 @@
+---
+// Zero-JS replacement for the old React+Motion `RotatingText` island.
+// Every call site across the site used it identically: split a single
+// static string into words and CSS-fade/slide each one in with a
+// per-word stagger, once, on mount. Nothing ever actually rotated
+// (`auto` was always false, `texts` always held exactly one string, and
+// no call site used the ref/next/previous API `RotatingText` exposed for
+// that). That entrance animation was implemented via Framer Motion's
+// `initial`/`animate` props, which - per motion.dev's own SSR docs -
+// render literally as written on the server: `initial={{opacity:0}}`
+// means the headline is *actually* invisible in the raw HTML, only
+// becoming visible once React hydrates this island and Motion's JS runs
+// the animation. Every H1/H2 on the site rendered through this
+// component, so that hydration delay was landing directly on LCP -
+// worst on mobile, where the throttled CPU pushed hydration far enough
+// out that Lighthouke measured a ~7s LCP for what is, underneath, just
+// static heading text. Same visual result (word-by-word fade + slide up
+// on a spring-like curve), but via a CSS @keyframes animation that runs
+// the instant the element paints - no JS, no hydration, no island.
+interface Props {
+  text: string;
+  /** Per-word stagger delay in seconds. Matches the old `staggerDuration` prop. */
+  staggerDuration?: number;
+  /** Classes on the outer wrapper (was `mainClassName`). */
+  class?: string;
+  /** Classes on each word's overflow-hidden clipping box (was `splitLevelClassName`). */
+  wordClass?: string;
+  /** Inline style on the outer wrapper (e.g. `display:inline-flex` to sit inline with sibling fragments). */
+  style?: string;
+}
+
+const { text, staggerDuration = 0.04, class: className, wordClass, style } = Astro.props;
+
+const words = text.split(' ');
+---
+
+<span class:list={['stagger-text', className]} style={style}>
+  {
+    words.map((word, i) => (
+      <span class:list={['stagger-text-word', wordClass]}>
+        <span class="stagger-text-el" style={`animation-delay:${(i * staggerDuration).toFixed(3)}s`}>
+          {word}
+        </span>
+        {i !== words.length - 1 && <span class="stagger-text-space"> </span>}
+      </span>
+    ))
+  }
+</span>
+
+<style>
+  .stagger-text {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .stagger-text-word {
+    display: inline-flex;
+  }
+  .stagger-text-space {
+    white-space: pre;
+  }
+  .stagger-text-el {
+    display: inline-block;
+  }
+
+  /* Same visual arc as the old spring transition (damping:30,
+     stiffness:400 - a quick, slightly-overshooting settle): ease-out
+     cubic-bezier approximates that settle without needing a JS spring
+     solver, at a duration tuned to roughly match the old spring's
+     settle time.
+
+     The keyframe's `from` opacity is 0.01, not 0: Chrome's LCP text
+     candidacy check excludes any element with rendered opacity <= 0 at
+     the moment it's evaluated (see WICG largest-contentful-paint spec +
+     the Paint Timing spec's "paintable" definition), and that check is
+     live against the actual animated value, not a one-time read of the
+     animation's start keyframe. A `from{opacity:0}` would still make
+     this element opacity-0 for the first rendered frame, technically
+     re-introducing (a much shorter, single-frame) version of the exact
+     bug this component replaces. Starting at 0.01 keeps every frame of
+     the animation, including the very first, already a valid LCP
+     candidate - the paint that matters for the metric happens the
+     instant this CSS-only animation starts, with no JS/hydration wait. */
+  @media (prefers-reduced-motion: no-preference) {
+    .stagger-text-el {
+      animation: stagger-text-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+  }
+</style>
+
+<style is:global>
+  @keyframes stagger-text-in {
+    from {
+      transform: translateY(100%);
+      opacity: 0.01;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+</style>

@@ -128,7 +128,18 @@ const serviceSchema = {
         <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible>
           Get a Free Estimate
         </SpecularButton>
-        <Button href={`tel:${business.hotline.tel}`} variant="outline" size="lg" icon={Phone}>
+        <!-- ghost, not outline: outline's text-pink-600 measures 2.15:1 on
+             this section's bg-teal-900 (axe/Lighthouse color-contrast),
+             badly failing WCAG AA's 4.5:1 - that variant is styled for
+             light surfaces (see Button.astro). Matches the same
+             tone==='teal' swap SplitFeature.astro already does. -->
+        <Button
+          href={`tel:${business.hotline.tel}`}
+          variant="ghost"
+          size="lg"
+          icon={Phone}
+          class="border-2 border-white/15"
+        >
           {business.hotline.display}
         </Button>
       </div>

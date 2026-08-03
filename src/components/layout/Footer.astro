@@ -4,7 +4,7 @@ import Container from '../ui/Container.astro';
 import Button from '../ui/Button.astro';
 import SpecularButton from '../islands/SpecularButton.tsx';
 import SocialIcon from '../ui/SocialIcon.astro';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import { business, serviceAreas } from '../../data/business';
 import { services } from '../../data/services';
 import { cityPages } from '../../data/cityPages';
@@ -30,17 +30,11 @@ const companyLinks = [
   <div class="border-b border-white/10 bg-white">
     <Container class="flex flex-col items-center gap-6 py-14 text-center sm:py-16">
       <h2 class="font-display text-ink-900 text-3xl font-bold text-balance sm:text-4xl">
-        <RotatingText
-          client:visible
-          texts={["One call does it all. Let's fix it today."]}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
+        <StaggerText
+          text="One call does it all. Let's fix it today."
           staggerDuration={0.03}
-          staggerFrom="first"
-          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
-          mainClassName="justify-center"
+          wordClass="overflow-hidden pb-0.5 sm:pb-1"
+          class="justify-center"
         />
       </h2>
       <p class="text-ink-500 max-w-xl text-balance">

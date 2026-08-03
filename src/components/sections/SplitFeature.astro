@@ -5,7 +5,7 @@ import Container from '../ui/Container.astro';
 import Eyebrow from '../ui/Eyebrow.astro';
 import Button from '../ui/Button.astro';
 import SpecularButton from '../islands/SpecularButton.tsx';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import { Phone } from 'lucide-react';
 import { business } from '../../data/business';
 import { specularPink } from '../../lib/specularPresets';
@@ -46,17 +46,7 @@ const { eyebrow, title, body, image, imageAlt, reverse = false, cta, tone = 'def
           tone === 'teal' ? 'text-white' : 'text-ink-900'
         ]}
       >
-        <RotatingText
-          client:visible
-          texts={[title]}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
-          staggerDuration={0.04}
-          staggerFrom="first"
-          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
-        />
+        <StaggerText text={title} staggerDuration={0.04} wordClass="overflow-hidden pb-0.5 sm:pb-1" />
       </h2>
       <p
         class:list={['mt-5 max-w-lg leading-relaxed text-balance', tone === 'teal' ? 'text-white/65' : 'text-ink-600']}

@@ -14,6 +14,8 @@ import {
 import { getPageContextTopic, topicLabel } from '../../lib/chat/knowledge';
 import { services } from '../../data/services';
 import { cityPages } from '../../data/cityPages';
+import { setOverlayCloser, registerOverlayOpen, registerOverlayClosed } from '../../lib/overlayCoordinator';
+import { useVisualViewportOffset } from '../../lib/useVisualViewportOffset';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const TEASER_SEEN_KEY = 'pinkys-chat-teaser-seen';
@@ -264,6 +266,21 @@ export default function ChatWidget() {
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  // Register with the shared overlay coordinator so opening Chat while
+  // Coupons or Accessibility is open closes the other one instead of overlapping.
+  useEffect(() => {
+    setOverlayCloser('chat', () => setOpen(false));
+  }, []);
+  useEffect(() => {
+    if (open) registerOverlayOpen('chat');
+    else registerOverlayClosed('chat');
+  }, [open]);
+
+  // On-screen keyboard covers part of the visual viewport on mobile without
+  // dvh reliably shrinking to match (notably iOS Safari) — clamp the panel's
+  // max-height further while a keyboard is present.
+  const kbOffset = useVisualViewportOffset();
 
   useEffect(() => {
     if (!open) return;
@@ -617,7 +634,7 @@ export default function ChatWidget() {
                   : 'Type a question…';
 
   return (
-    <div className="fixed right-4 bottom-24 z-40 lg:right-6 lg:bottom-6">
+    <div className="z-widget-panel fixed right-4 bottom-24 lg:right-6 lg:bottom-6">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -626,7 +643,14 @@ export default function ChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.22, ease: EASE }}
-            className="border-ink-100 mb-4 flex h-[min(600px,72vh)] w-[92vw] max-w-[400px] flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-2xl shadow-black/15"
+            style={
+              kbOffset > 0
+                ? {
+                    maxHeight: `calc(min(600px, 100dvh - var(--overlay-safe-top) - var(--overlay-safe-bottom)) - ${kbOffset}px)`
+                  }
+                : undefined
+            }
+            className="border-ink-100 mb-4 flex max-h-[min(600px,calc(100dvh-var(--overlay-safe-top)-var(--overlay-safe-bottom)))] w-[92vw] max-w-[400px] flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-2xl shadow-black/15"
             role="dialog"
             aria-label={`Chat with ${business.name}`}
           >

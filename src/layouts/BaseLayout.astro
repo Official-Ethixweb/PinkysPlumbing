@@ -113,7 +113,7 @@ const allSchema = [localBusinessSchema, ...schema];
   <body class="bg-ink-50 font-body text-ink-600 antialiased">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-pink-600 focus:px-5 focus:py-3 focus:font-semibold focus:text-white"
+      class="focus:z-skiplink sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:rounded-full focus:bg-pink-600 focus:px-5 focus:py-3 focus:font-semibold focus:text-white"
     >
       Skip to content
     </a>
@@ -123,8 +123,18 @@ const allSchema = [localBusinessSchema, ...schema];
     </main>
     <Footer />
     <StickyCallBar />
-    <CouponWidget client:load />
-    <AccessibilityWidget client:load />
-    <ChatWidget client:load />
+    <!-- client:idle (was client:load) on all three: each of these floating
+         widgets renders its own SSR HTML fine without JS (the coupon tab,
+         accessibility toggle, and chat launcher are all real markup, not
+         JS-drawn), and none of them gate anything the user needs at first
+         paint. client:load hydrated all three immediately, competing with
+         the actual above-the-fold content for the main thread during the
+         window that determines LCP/TBT. Deferring to idle costs nothing
+         perceptible - ChatWidget's teaser bubble alone already waits 4.5s
+         after mount before it does anything, far longer than an idle
+         callback takes to fire on any real device. -->
+    <CouponWidget client:idle />
+    <AccessibilityWidget client:idle />
+    <ChatWidget client:idle />
   </body>
 </html>

@@ -18,7 +18,7 @@ const navLinks = [
 ];
 ---
 
-<header id="site-header" class="fixed inset-x-0 top-0 z-50">
+<header id="site-header" class="z-header fixed inset-x-0 top-0">
   <!-- Utility bar -->
   <div class="hidden bg-teal-950 text-white/70 lg:block">
     <Container class="flex h-9 items-center justify-between text-[13px]">
@@ -111,7 +111,7 @@ const navLinks = [
           {business.hotline.display}
         </a>
         <div class="hidden sm:inline-flex">
-          <SpecularButton href="/contact-us/" size="md" {...specularPink} client:load>
+          <SpecularButton href="/contact-us/" size="md" {...specularPink} client:idle>
             Get a Free Estimate
           </SpecularButton>
         </div>
@@ -168,7 +168,10 @@ const navLinks = [
       <Accessibility className="size-4 shrink-0 text-pink-300" aria-hidden="true" />
       Accessibility
     </button>
-    <p class="font-display px-2 pb-2 text-xs font-bold tracking-wider text-white/50 uppercase">Services</p>
+    <!-- white/60, not /50: /50 on this bg-teal-900 dialog measures 3.98:1
+         (axe/Lighthouse color-contrast), below WCAG AA's 4.5:1 floor for
+         text this size/weight. Matches the same fix in StatsStrip.astro. -->
+    <p class="font-display px-2 pb-2 text-xs font-bold tracking-wider text-white/60 uppercase">Services</p>
     <ul class="mb-4 grid grid-cols-2 gap-1">
       {
         services.map((s) => (
@@ -203,7 +206,7 @@ const navLinks = [
     <Button href={`tel:${business.hotline.tel}`} variant="secondary" size="lg" class="w-full"
       >Call {business.hotline.display}</Button
     >
-    <SpecularButton href="/contact-us/" size="lg" className="w-full" {...specularPink} client:load>
+    <SpecularButton href="/contact-us/" size="lg" className="w-full" {...specularPink} client:idle>
       Get a Free Estimate
     </SpecularButton>
   </div>

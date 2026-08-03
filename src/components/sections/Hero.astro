@@ -1,23 +1,44 @@
 ---
-import { Image } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import { Phone, ShieldCheck, Clock, Star, ArrowRight } from 'lucide-react';
 import Button from '../ui/Button.astro';
 import Container from '../ui/Container.astro';
 import SpecularButton from '../islands/SpecularButton.tsx';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import pinkysTruck from '../../assets/images/pinkys-truck.png';
 import { business } from '../../data/business';
 import { specularPink } from '../../lib/specularPresets';
 
-// The headline is 3 separate RotatingText islands (not 1) so the "(and
-// Things)" accent color survives: RotatingText only takes a flat string,
-// it can't color one inner word differently. `style={{ display: 'inline-flex' }}`
-// is passed through to override the component's own block-level `.text-rotate`
-// CSS with an inline style, which always wins the cascade regardless of
-// stylesheet load order, so the three fragments sit on one line like normal
-// inline text instead of stacking.
-const heroHeadlineTransition = { type: 'spring' as const, damping: 30, stiffness: 400 };
+// Hand-rolled <picture><source media> instead of astro:assets' <Image>: this
+// truck cutout only ever renders at lg+ (its wrapper is `hidden lg:flex`),
+// but display:none on an ancestor does NOT stop the browser's preload
+// scanner from fetching an <img>'s srcset - that's a CSS/paint-time concept,
+// and the scanner works off raw markup before any stylesheet is applied.
+// With the old plain <Image fetchpriority="high">, every mobile visitor was
+// downloading this desktop-only decorative image at high priority, stealing
+// bandwidth from the real mobile LCP resource for something that would
+// never even paint. A <source media="..."> is different: the browser
+// evaluates the media condition as part of resource *selection*, before
+// fetching, so a non-matching source is never requested at all - the only
+// reliable way to make an image truly not-fetched below a breakpoint.
+// astro:assets' own <Picture> component only branches on image *format*
+// (avif/webp/fallback), it has no media-query/art-direction prop, hence
+// dropping to the lower-level getImage() to build the srcset by hand.
+const truckImage = await getImage({
+  src: pinkysTruck,
+  widths: [480, 720, 1000],
+  sizes: '46vw',
+  quality: 'high',
+  format: 'webp'
+});
 
+// The headline is 4 separate StaggerText fragments (not 1) so the "(and
+// Things)" accent color survives: StaggerText only takes a flat string,
+// it can't color one inner word differently. `style="display:inline-flex"`
+// overrides the component's own block-level `.stagger-text` CSS with an
+// inline style, which always wins the cascade regardless of stylesheet
+// load order, so the four fragments sit on one line like normal inline
+// text instead of stacking.
 const badges = [
   { icon: Clock, label: '24/7 Emergency Service' },
   { icon: ShieldCheck, label: 'Licensed & Background-Checked' },
@@ -56,21 +77,101 @@ const badges = [
        a single frame, which would kill the loop). Masked to fade at
        top/bottom instead of a hard-edged box, same reasoning as the mask
        below: dissolving into the white page beats a painted-on
-       rectangle. -->
+       rectangle.
+
+       Mobile: static-first-then-animate, not a single static frame.
+       Measured with real (not Lantern-simulated) CPU+network throttling
+       via Lighthouse's devtools throttling method, this element's LCP
+       was ~10s on a throttled mobile connection with EITHER the 2.1MB
+       desktop encode OR an earlier 1.3MB/8fps "lighter" animated
+       attempt, because at that connection speed even 1.3MB alone takes
+       ~9s to download - fetchpriority/decode cost were red herrings,
+       it's pure bytes over the wire competing with everything else the
+       page needs on first paint. But the motion is worth keeping, so
+       instead of dropping it on mobile entirely: paint a static frame
+       first (hero-seattle-loop-mobile.webp, ~26KB, a real frame of this
+       exact footage pulled via PIL - not a separately-shot stock photo,
+       so there's no visible "swap" in framing/color), then swap the
+       <img> src to a separately mobile-tuned animated encode
+       (hero-seattle-loop-mobile-anim.webp: 480px/7fps/6s/~485KB, well
+       under the 2.1MB desktop encode) once the browser is idle. LCP
+       measures the static frame (small, fast, off the critical path);
+       the swap happens after that measurement window, off the
+       requestIdleCallback queue, well clear of any first-paint budget.
+       img.decode() before swapping avoids a decode-jank frame on the
+       switch. Tablet/desktop are untouched, still the full 15fps/2.1MB
+       loop this comment has been tracking - no bandwidth pressure
+       there, so no static-first step needed. -->
   <div
     class="pointer-events-none absolute inset-0"
     style="mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%);"
     aria-hidden="true"
   >
-    <img
-      src="/hero-seattle-loop.webp"
-      alt=""
-      class="h-full w-full object-cover opacity-70"
-      loading="eager"
-      decoding="async"
-      fetchpriority="low"
-    />
+    <picture>
+      <source id="hero-bg-mobile-source" srcset="/hero-seattle-loop-mobile.webp" media="(max-width: 767px)" />
+      <img
+        id="hero-bg-img"
+        src="/hero-seattle-loop.webp"
+        data-mobile-anim="/hero-seattle-loop-mobile-anim.webp"
+        alt=""
+        class="h-full w-full object-cover opacity-70"
+        loading="eager"
+        decoding="async"
+        fetchpriority="low"
+      />
+    </picture>
   </div>
+
+  <script>
+    (() => {
+      const img = document.getElementById('hero-bg-img') as HTMLImageElement | null;
+      if (!img) return;
+      const animSrc = img.dataset.mobileAnim;
+      if (!animSrc) return;
+      // Only mobile got the static-first swap-in; tablet/desktop already
+      // loaded the full animated loop directly via the <picture> source
+      // fallback and shouldn't re-fetch anything. (Originally this also
+      // checked `img.currentSrc` to confirm the static source actually
+      // resolved before swapping - but currentSrc is populated by the
+      // "update the image data" algorithm, which the HTML spec runs as a
+      // microtask, not synchronously with parsing. This script runs
+      // immediately after the <picture> in document order, before that
+      // microtask has a chance to settle, so currentSrc was reliably still
+      // "" here and the check always failed silently, permanently
+      // skipping the swap. The media query alone is enough - it's the same
+      // condition the <source> itself uses to pick the static image.)
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      if (!isMobile) return;
+
+      const swap = () => {
+        const next = new Image();
+        next.src = animSrc;
+        next
+          .decode()
+          .catch(() => {})
+          .then(() => {
+            if (!window.matchMedia('(max-width: 767px)').matches) return;
+            // Reassigning img.src alone does nothing here: this <img> still
+            // has a <picture> sibling <source> whose media query matches, and
+            // per the HTML spec's "select an image source" step, a matching
+            // <source> is consulted BEFORE the img's own src/srcset - so the
+            // source keeps winning and currentSrc silently stays on the
+            // static frame no matter what img.src is set to. Removing the
+            // source is itself a "relevant mutation" that forces
+            // re-selection, which then falls through to the img's own src.
+            document.getElementById('hero-bg-mobile-source')?.remove();
+            img.src = animSrc;
+          });
+      };
+
+      const ric = (window as typeof window & { requestIdleCallback?: typeof requestIdleCallback }).requestIdleCallback;
+      if (ric) {
+        ric(swap, { timeout: 3000 });
+      } else {
+        window.addEventListener('load', swap, { once: true });
+      }
+    })();
+  </script>
 
   <!-- No pink wash/tint on this section at all - plain white behind the
        text, by explicit request. Photo blend is handled entirely by the
@@ -118,18 +219,19 @@ const badges = [
   <div
     class="absolute inset-y-0 right-0 hidden w-[50.6%] max-w-[792px] translate-y-[70px] flex-col items-center justify-center gap-6 lg:flex"
   >
-    <Image
-      src={pinkysTruck}
-      alt="Pinky's Plumbing service truck"
-      widths={[480, 720, 1000]}
-      sizes="46vw"
-      quality="high"
-      format="webp"
-      class="pointer-events-none h-auto w-full object-contain"
-      loading="eager"
-      fetchpriority="high"
-      aria-hidden="true"
-    />
+    <picture>
+      <source media="(min-width: 1024px)" srcset={truckImage.srcSet.attribute} sizes="46vw" />
+      <img
+        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
+        alt="Pinky's Plumbing service truck"
+        width={truckImage.attributes.width}
+        height={truckImage.attributes.height}
+        class="pointer-events-none h-auto w-full object-contain"
+        loading="eager"
+        fetchpriority="high"
+        aria-hidden="true"
+      />
+    </picture>
     <ul class="flex flex-wrap justify-center gap-x-6 gap-y-2" style="--reveal-delay:150ms">
       {
         badges.map(({ icon: Icon, label }) => (
@@ -164,55 +266,31 @@ const badges = [
       <h1
         class="font-display text-ink-900 mt-6 text-[2.85rem] leading-[0.98] font-extrabold tracking-[-0.03em] text-balance sm:text-[4.25rem] lg:mt-3 lg:text-[5rem]"
       >
-        <RotatingText
-          client:load
-          texts={['When Your Plumbing']}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
+        <StaggerText
+          text="When Your Plumbing"
           staggerDuration={0.04}
-          staggerFrom="first"
-          transition={heroHeadlineTransition}
-          splitLevelClassName="overflow-hidden pb-1 sm:pb-2"
-          style={{ display: 'inline-flex' }}
+          wordClass="overflow-hidden pb-1 sm:pb-2"
+          style="display:inline-flex"
         />{' '}
-        <RotatingText
-          client:load
-          texts={['(and Things)']}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
+        <StaggerText
+          text="(and Things)"
           staggerDuration={0.04}
-          staggerFrom="first"
-          transition={heroHeadlineTransition}
-          splitLevelClassName="overflow-hidden pb-1 sm:pb-2"
-          mainClassName="text-pink-600"
-          style={{ display: 'inline-flex' }}
+          wordClass="overflow-hidden pb-1 sm:pb-2"
+          class="text-pink-600"
+          style="display:inline-flex"
         />{' '}
-        <RotatingText
-          client:load
-          texts={['Get Stinky']}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
+        <StaggerText
+          text="Get Stinky"
           staggerDuration={0.04}
-          staggerFrom="first"
-          transition={heroHeadlineTransition}
-          splitLevelClassName="overflow-hidden pb-1 sm:pb-2"
-          style={{ display: 'inline-flex' }}
+          wordClass="overflow-hidden pb-1 sm:pb-2"
+          style="display:inline-flex"
         />{' '}
-        <RotatingText
-          client:load
-          texts={["Call Pinky's"]}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
+        <StaggerText
+          text="Call Pinky's"
           staggerDuration={0.04}
-          staggerFrom="first"
-          transition={heroHeadlineTransition}
-          splitLevelClassName="overflow-hidden pb-1 sm:pb-2"
-          mainClassName="text-[4px] align-baseline"
-          style={{ display: 'inline-flex' }}
+          wordClass="overflow-hidden pb-1 sm:pb-2"
+          class="align-baseline text-[4px]"
+          style="display:inline-flex"
         />
       </h1>
 

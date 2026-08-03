@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import { ChevronRight } from 'lucide-react';
 import Container from '../ui/Container.astro';
-import RotatingText from '../islands/RotatingText.tsx';
+import StaggerText from '../shared/StaggerText.astro';
 import type { ImageMetadata } from 'astro';
 
 interface Crumb {
@@ -66,17 +66,7 @@ const imageHeight = large ? 416 : 320;
       <h1
         class="font-display text-ink-900 mt-4 text-4xl leading-[1.03] font-extrabold tracking-[-0.02em] text-balance sm:text-5xl"
       >
-        <RotatingText
-          client:load
-          texts={[title]}
-          auto={false}
-          animatePresenceInitial={true}
-          splitBy="words"
-          staggerDuration={0.04}
-          staggerFrom="first"
-          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-          splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1"
-        />
+        <StaggerText text={title} staggerDuration={0.04} wordClass="overflow-hidden pb-0.5 sm:pb-1" />
       </h1>
       {description && <p class="text-ink-600 mt-4 max-w-xl text-balance">{description}</p>}
     </div>

@@ -73,6 +73,7 @@ import {
   useA11yPanelOpen
 } from '../../lib/accessibility/store';
 import { useReadAloud } from '../../lib/accessibility/useReadAloud';
+import { setOverlayCloser, registerOverlayOpen, registerOverlayClosed } from '../../lib/overlayCoordinator';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -126,6 +127,16 @@ export default function AccessibilityWidget() {
     window.addEventListener('open-a11y-panel', onOpenRequest);
     return () => window.removeEventListener('open-a11y-panel', onOpenRequest);
   }, []);
+
+  // Register with the shared overlay coordinator so opening Accessibility
+  // while Coupons or Chat is open closes the other one instead of overlapping.
+  useEffect(() => {
+    setOverlayCloser('accessibility', () => closeA11yPanel());
+  }, []);
+  useEffect(() => {
+    if (open) registerOverlayOpen('accessibility');
+    else registerOverlayClosed('accessibility');
+  }, [open]);
 
   // Apply effects to the document whenever settings change.
   useEffect(() => {
@@ -249,7 +260,7 @@ export default function AccessibilityWidget() {
         aria-controls="a11y-panel"
         aria-label={open ? 'Close accessibility menu' : 'Open accessibility menu (Alt+A)'}
         onClick={() => toggleA11yPanel()}
-        className="fixed top-[38%] right-0 z-40 hidden w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-l-2xl border border-r-0 border-white/15 bg-teal-900 py-5 text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] transition-[width,padding] duration-300 hover:w-14 lg:flex"
+        className="z-widget-tab fixed top-[38%] right-0 hidden w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-l-2xl border border-r-0 border-white/15 bg-teal-900 py-5 text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] transition-[width,padding] duration-300 hover:w-14 lg:flex"
       >
         {open ? (
           <X className="size-4 shrink-0" aria-hidden="true" />
@@ -270,12 +281,12 @@ export default function AccessibilityWidget() {
         aria-controls="a11y-panel"
         aria-label={open ? 'Close accessibility menu' : 'Open accessibility menu'}
         onClick={() => toggleA11yPanel()}
-        className="fixed bottom-24 left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-white bg-teal-900 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.4)] transition-transform active:scale-95 lg:hidden"
+        className="z-widget-tab fixed bottom-24 left-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-white bg-teal-900 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.4)] transition-transform active:scale-95 lg:hidden"
       >
         <Accessibility className="h-5 w-5" />
       </button>
 
-      <div className="fixed bottom-40 left-3 z-40 lg:top-24 lg:right-20 lg:bottom-auto lg:left-auto">
+      <div className="z-widget-panel fixed inset-x-3 bottom-[calc(var(--sticky-bar-h)+0.75rem+env(safe-area-inset-bottom,0px))] lg:inset-x-auto lg:top-24 lg:right-20 lg:bottom-auto lg:left-auto">
         <AnimatePresence>
           {open && (
             <motion.div
@@ -289,7 +300,7 @@ export default function AccessibilityWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.96 }}
               transition={{ duration: 0.22, ease: EASE }}
-              className="border-ink-100 flex h-[min(640px,72vh)] w-[calc(100vw-1.5rem)] max-w-[380px] flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-2xl shadow-black/15"
+              className="border-ink-100 flex max-h-[min(640px,calc(100dvh-var(--overlay-safe-top)-var(--overlay-safe-bottom)))] w-full max-w-[380px] flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-2xl shadow-black/15"
             >
               <div className="relative shrink-0 overflow-hidden bg-teal-900 p-5">
                 <div
