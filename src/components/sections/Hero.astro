@@ -1,39 +1,23 @@
 ---
-import { getImage } from 'astro:assets';
+import { Image } from 'astro:assets';
 import { Phone, ShieldCheck, Clock, Star, ArrowRight } from 'lucide-react';
 import Button from '../ui/Button.astro';
 import Container from '../ui/Container.astro';
 import SpecularButton from '../islands/SpecularButton.tsx';
 import StaggerText from '../shared/StaggerText.astro';
-import pinkysTruck from '../../assets/images/pinkys-truck.png';
+import pinkysVan from '../../assets/images/pinkys-van.png';
 import { business } from '../../data/business';
 import { specularPink } from '../../lib/specularPresets';
 
-// Hand-rolled <picture><source media> instead of astro:assets' <Image>: this
-// truck cutout only ever renders at lg+ (its wrapper is `hidden lg:flex`),
-// but display:none on an ancestor does NOT stop the browser's preload
-// scanner from fetching an <img>'s srcset - that's a CSS/paint-time concept,
-// and the scanner works off raw markup before any stylesheet is applied.
-// With the old plain <Image fetchpriority="high">, every mobile visitor was
-// downloading this desktop-only decorative image at high priority, stealing
-// bandwidth from the real mobile LCP resource for something that would
-// never even paint. A <source media="..."> is different: the browser
-// evaluates the media condition as part of resource *selection*, before
-// fetching, so a non-matching source is never requested at all - the only
-// reliable way to make an image truly not-fetched below a breakpoint.
-// astro:assets' own <Picture> component only branches on image *format*
-// (avif/webp/fallback), it has no media-query/art-direction prop, hence
-// dropping to the lower-level getImage() to build the srcset by hand.
-const truckImage = await getImage({
-  src: pinkysTruck,
-  widths: [480, 720, 1000],
-  sizes: '46vw',
-  quality: 'high',
-  format: 'webp'
-});
+// NOTE the old getImage()/truckImage srcset block was removed in the merge:
+// it hand-built a <picture><source media> for pinkys-truck.png so that
+// desktop-only cutout was never fetched on mobile. The layered hero renders
+// the VAN cutout via <Image> instead, so the truck asset is unreferenced and
+// that code was dead. The same mobile-bandwidth concern is still handled for
+// the skyline - see the <picture> + idle-swap on .hero-skyline below.
 
-// The headline is 4 separate StaggerText fragments (not 1) so the "(and
-// Things)" accent color survives: StaggerText only takes a flat string,
+// The headline is 3 separate StaggerText fragments (not 1) so the "Call
+// Pinky's!" accent color survives: StaggerText only takes a flat string,
 // it can't color one inner word differently. `style="display:inline-flex"`
 // overrides the component's own block-level `.stagger-text` CSS with an
 // inline style, which always wins the cascade regardless of stylesheet
@@ -46,67 +30,54 @@ const badges = [
 ];
 ---
 
-<section class="relative overflow-hidden bg-white">
-  <!-- ambient backdrop across all breakpoints: looping Seattle waterfront
-       skyline (downtown towers + a cargo ship/ferry drifting across),
-       full-bleed behind the whole section. Second pass on this asset - v1
-       used a different source clip (a tilt-down reveal), gaussian-blurred
-       and cropped tight to a narrow portrait sliver at ~45% opacity, which
-       read as a static texture rather than a video. This version is
-       intentionally sharp (no blur) at a much more generous crop (1300px
-       of the source's 1920 width, not 670px) and higher opacity (70%) so
-       the motion actually reads. Trade-off: sharp photographic motion
-       compresses far worse than blur did in animated WebP (no inter-frame
-       prediction like a real video codec), so fps/resolution/duration
-       were all cut harder to compensate (720px wide, 8fps, 8s straight
-       loop - no boomerang here, since this clip's motion is boats drifting
-       one direction, not a reversible camera tilt) to land back near the
-       same ~1.3MB file size. Bumped to 15fps (from the original 8fps) since
-       8fps read as jittery for this much sharp, uncompressed-looking motion.
-       First attempt at 15fps clawed the file size back down by shrinking to
-       640px wide and dropping encode quality, but that made the frames
-       themselves visibly soft/blocky - not worth it. Kept the full 720px
-       width and a higher webp quality (-q:v 60, up from 35) instead, and
-       trimmed duration to 6s (from 8s) to offset the frame-count growth from
-       going to 15fps - loop length isn't perceptible at this scale, unlike
-       resolution/sharpness, so it's the cheaper lever. Lands at ~2MB, up
-       from ~1.3MB, in exchange for full sharpness at the smoother frame
-       rate. Still an animated WebP rather than <video>
-       (zero JS, no inline-playback quirks) living in /public rather than
-       /src/assets (astro:assets' image pipeline flattens animated WebP to
-       a single frame, which would kill the loop). Masked to fade at
-       top/bottom instead of a hard-edged box, same reasoning as the mask
-       below: dissolving into the white page beats a painted-on
-       rectangle.
+<!--
+  LAYERED HERO (2026-08 design reference)
 
-       Mobile: static-first-then-animate, not a single static frame.
-       Measured with real (not Lantern-simulated) CPU+network throttling
-       via Lighthouse's devtools throttling method, this element's LCP
-       was ~10s on a throttled mobile connection with EITHER the 2.1MB
-       desktop encode OR an earlier 1.3MB/8fps "lighter" animated
-       attempt, because at that connection speed even 1.3MB alone takes
-       ~9s to download - fetchpriority/decode cost were red herrings,
-       it's pure bytes over the wire competing with everything else the
-       page needs on first paint. But the motion is worth keeping, so
-       instead of dropping it on mobile entirely: paint a static frame
-       first (hero-seattle-loop-mobile.webp, ~26KB, a real frame of this
-       exact footage pulled via PIL - not a separately-shot stock photo,
-       so there's no visible "swap" in framing/color), then swap the
-       <img> src to a separately mobile-tuned animated encode
-       (hero-seattle-loop-mobile-anim.webp: 480px/7fps/6s/~485KB, well
-       under the 2.1MB desktop encode) once the browser is idle. LCP
-       measures the static frame (small, fast, off the critical path);
-       the swap happens after that measurement window, off the
-       requestIdleCallback queue, well clear of any first-paint budget.
-       img.decode() before swapping avoids a decode-jank frame on the
-       switch. Tablet/desktop are untouched, still the full 15fps/2.1MB
-       loop this comment has been tracking - no bandwidth pressure
-       there, so no static-first step needed. -->
-  <div
-    class="pointer-events-none absolute inset-0"
-    style="mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 75%, transparent 100%);"
-    aria-hidden="true"
-  >
+  Four stacked planes, back to front:
+    1. BACKGROUND  - white content surface (the <section> itself)
+    2. MIDGROUND   - Seattle skyline loop, CONTAINED in a panel on the
+                     right (desktop) / a band behind the content (mobile)
+    3. FOREGROUND  - transparent van, straddling the panel's left edge
+    4. CONTENT     - headline/CTAs, above everything, in their own column
+
+  Why there is no gradient/feather/white fade anywhere in here:
+  the previous versions tried to dissolve the skyline into the page and
+  every attempt read as a grey wall or a washed-out photo (see git log -
+  "Remove hero photo feather entirely", "Stop the hero wash from tinting
+  the photo"). The fix is compositional, not a blend mode: the panel gets
+  a HARD edge, and the van is positioned to physically cross that edge.
+  An object overlapping a boundary is what sells depth - a soft gradient
+  actively destroys it by making the boundary mushy. Do not reintroduce
+  a mask/fade on the panel; it will undo the 3D effect.
+-->
+<section class="hero-section relative overflow-hidden bg-white">
+  <!-- The skyline asset itself is unchanged (same /public animated WebP,
+       720px wide, 15fps, 6s loop, ~2MB, tuned over several passes for
+       sharpness-vs-size; it lives in /public rather than /src/assets
+       because astro:assets flattens animated WebP to a single frame,
+       which would kill the loop). Only its FRAMING changed here: it was
+       a full-bleed backdrop behind the whole section, it is now a
+       contained panel. Do not re-add a top/bottom fade mask at >=768px.
+
+       MIDGROUND: contained Seattle skyline panel.
+       Desktop: occupies the right ~52% with a hard left edge and a
+       rounded outer corner, matching the reference's "video box".
+       Mobile: becomes a full-width band pinned to the lower half, sitting
+       BEHIND the text rather than beside it (see .hero-skyline in the
+       style block) - the animation stays on mobile as requested, it just
+       reflows instead of shrinking the desktop arrangement.
+       Same /public animated WebP as before: zero JS, no <video>
+       autoplay quirks, and unchanged file weight, so none of the
+       existing mobile animation/PageSpeed work is undone. -->
+  <!-- MOBILE LCP (kept from main, do not simplify back to a plain <img>):
+       the 2.1MB desktop animated WebP measured a ~10s LCP on throttled
+       mobile - pure bytes over the wire, not decode cost. So mobile paints
+       a ~26KB static frame of the same footage first (<source media>, which
+       the browser resolves before fetching, so the big encode is never
+       requested there), then swaps in a mobile-tuned ~485KB animated encode
+       once the browser is idle - after the LCP measurement window.
+       Tablet/desktop fall through to the full loop unchanged. -->
+  <div class="hero-skyline pointer-events-none absolute" aria-hidden="true">
     <picture>
       <source id="hero-bg-mobile-source" srcset="/hero-seattle-loop-mobile.webp" media="(max-width: 767px)" />
       <img
@@ -114,134 +85,14 @@ const badges = [
         src="/hero-seattle-loop.webp"
         data-mobile-anim="/hero-seattle-loop-mobile-anim.webp"
         alt=""
-        class="h-full w-full object-cover opacity-70"
+        class="h-full w-full object-cover"
         loading="eager"
         decoding="async"
         fetchpriority="low"
+        width="720"
+        height="900"
       />
     </picture>
-  </div>
-
-  <script>
-    (() => {
-      const img = document.getElementById('hero-bg-img') as HTMLImageElement | null;
-      if (!img) return;
-      const animSrc = img.dataset.mobileAnim;
-      if (!animSrc) return;
-      // Only mobile got the static-first swap-in; tablet/desktop already
-      // loaded the full animated loop directly via the <picture> source
-      // fallback and shouldn't re-fetch anything. (Originally this also
-      // checked `img.currentSrc` to confirm the static source actually
-      // resolved before swapping - but currentSrc is populated by the
-      // "update the image data" algorithm, which the HTML spec runs as a
-      // microtask, not synchronously with parsing. This script runs
-      // immediately after the <picture> in document order, before that
-      // microtask has a chance to settle, so currentSrc was reliably still
-      // "" here and the check always failed silently, permanently
-      // skipping the swap. The media query alone is enough - it's the same
-      // condition the <source> itself uses to pick the static image.)
-      const isMobile = window.matchMedia('(max-width: 767px)').matches;
-      if (!isMobile) return;
-
-      const swap = () => {
-        const next = new Image();
-        next.src = animSrc;
-        next
-          .decode()
-          .catch(() => {})
-          .then(() => {
-            if (!window.matchMedia('(max-width: 767px)').matches) return;
-            // Reassigning img.src alone does nothing here: this <img> still
-            // has a <picture> sibling <source> whose media query matches, and
-            // per the HTML spec's "select an image source" step, a matching
-            // <source> is consulted BEFORE the img's own src/srcset - so the
-            // source keeps winning and currentSrc silently stays on the
-            // static frame no matter what img.src is set to. Removing the
-            // source is itself a "relevant mutation" that forces
-            // re-selection, which then falls through to the img's own src.
-            document.getElementById('hero-bg-mobile-source')?.remove();
-            img.src = animSrc;
-          });
-      };
-
-      const ric = (window as typeof window & { requestIdleCallback?: typeof requestIdleCallback }).requestIdleCallback;
-      if (ric) {
-        ric(swap, { timeout: 3000 });
-      } else {
-        window.addEventListener('load', swap, { once: true });
-      }
-    })();
-  </script>
-
-  <!-- No pink wash/tint on this section at all - plain white behind the
-       text, by explicit request. Photo blend is handled entirely by the
-       mask on the photo box itself (below), not by any color overlay. -->
-  <div
-    class="pointer-events-none absolute -right-20 bottom-0 size-[420px] rounded-full bg-teal-500/15 blur-[120px]"
-    aria-hidden="true"
-  >
-  </div>
-
-  <!-- desktop-only floating truck cutout: this is a real transparent-alpha
-       PNG (the file already carries a soft feathered edge + a baked-in
-       ground shadow, confirmed by compositing it over a light background
-       before wiring it in - it is NOT the dark studio vignette it looks
-       like in a flat image viewer), so it just sits directly on the
-       ambient skyline backdrop above with no extra masking needed. Sized
-       by width with the image's own aspect ratio (object-contain, not
-       cover) since it's a wide side-profile shot - stretching it to cover
-       a box would crop the cab or the shadow. Anchored from the section's
-       TOP (not bottom) on purpose: this used to be bottom-anchored, but
-       that ties the truck's position to the section's height - when the
-       hero was later tightened (lg:py/gap/margins trimmed) to fit one
-       viewport with no scroll, the section got shorter, the bottom anchor
-       point moved up with it, and the truck's roof clipped through
-       overflow-hidden above the section's top edge. Anchoring from the
-       top instead is stable regardless of how tall the section ends up
-       being. lg-only: mobile has no room for a floating side-profile
-       truck next to the text. -->
-  <!-- badges are duplicated (not reused via CSS reflow) because this list
-       lives in a completely different coordinate space on desktop - it's
-       section-relative, right-aligned under the truck - versus the
-       mobile/tablet copy further down, which is a normal in-flow child of
-       the left text column. Trying to reposition one shared element
-       between those two contexts with responsive classes alone isn't
-       reliable; two small, independently readable lists is simpler than
-       one that needs to teleport. The mobile copy gets lg:hidden so only
-       one is ever visible at a time.
-
-       inset-y-0 + justify-center (not a fixed top offset) - the truck
-       block sits inside its own full-height column and centers itself
-       there, the same way Container's justify-center centers the left
-       text column. Both sides now key off the same "centered in the
-       section" rule instead of one being pinned near the top, which read
-       as misaligned/floating higher than the left column. -->
-  <div
-    class="absolute inset-y-0 right-0 hidden w-[50.6%] max-w-[792px] translate-y-[70px] flex-col items-center justify-center gap-6 lg:flex"
-  >
-    <picture>
-      <source media="(min-width: 1024px)" srcset={truckImage.srcSet.attribute} sizes="46vw" />
-      <img
-        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
-        alt="Pinky's Plumbing service truck"
-        width={truckImage.attributes.width}
-        height={truckImage.attributes.height}
-        class="pointer-events-none h-auto w-full object-contain"
-        loading="eager"
-        fetchpriority="high"
-        aria-hidden="true"
-      />
-    </picture>
-    <ul class="flex flex-wrap justify-center gap-x-6 gap-y-2" style="--reveal-delay:150ms">
-      {
-        badges.map(({ icon: Icon, label }) => (
-          <li class="text-ink-700 flex items-center gap-2 text-sm font-semibold">
-            <Icon className="size-4 text-pink-600" aria-hidden="true" />
-            {label}
-          </li>
-        ))
-      }
-    </ul>
   </div>
 
   <!-- lg padding/gaps/spacing are intentionally tighter than sm/mobile's
@@ -249,10 +100,26 @@ const badges = [
        gap-3 instead of 8) so the whole hero - headline through the badges
        row - fits inside one desktop viewport (tested down to 1440x768)
        with no scroll, without touching the mobile/tablet layout at all. -->
-  <Container
-    class="relative flex min-h-[600px] flex-col justify-center gap-8 py-24 sm:min-h-[640px] sm:py-28 lg:min-h-0 lg:gap-3 lg:py-4"
-  >
-    <div class="max-w-2xl lg:max-w-xl" data-reveal>
+  <!-- Vertical padding is owned by .hero-content in the style block below,
+       NOT by py-* utilities. Tailwind's py-24/sm:py-28 previously won the
+       cascade over the scoped rule (utilities and the scoped selector are
+       both single-class specificity, and the utility layer came later), so
+       the van-clearance padding silently never applied and the van sat on
+       the badges at every mobile width. Keep padding-top here and
+       padding-bottom in one place so they can't diverge again. -->
+  <!-- No min-h-* utilities: below 1024px the section is sized by its
+       in-flow children (copy + van), and a 600px floor only added dead
+       space. Desktop gets its height from .hero-section's min-height in
+       the style block instead. Vertical padding is likewise owned by
+       .hero-content there, not by py-* utilities - Tailwind's utility
+       layer outranks the scoped rule and silently overrode it. -->
+  <!-- No `relative` utility: .hero-content's position is set in the style
+       block (relative below 1024px, static at/above it). A Tailwind
+       `relative` class here outranks the scoped rule, which kept the
+       container as the van's containing block on desktop and left the van
+       frozen in place while the panel tracked the viewport. -->
+  <Container class="hero-content flex flex-col justify-center gap-8 lg:gap-3">
+    <div class="hero-copy max-w-4xl lg:max-w-[38rem]" data-reveal>
       <span
         class="font-display border-pink-350/40 bg-pink-350/10 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold tracking-wider text-pink-600 uppercase"
       >
@@ -264,32 +131,26 @@ const badges = [
       </span>
 
       <h1
-        class="font-display text-ink-900 mt-6 text-[2.85rem] leading-[0.98] font-extrabold tracking-[-0.03em] text-balance sm:text-[4.25rem] lg:mt-3 lg:text-[5rem]"
+        class="font-display text-ink-900 mt-6 text-[clamp(2.35rem,8.2vw,2.725rem)] leading-[0.98] font-bold tracking-[-0.03em] text-balance sm:text-[4.125rem] lg:mt-3 lg:text-[clamp(3.4rem,3.9vw,4.5rem)]"
       >
         <StaggerText
-          text="When Your Plumbing"
+          text="When Your Plumbing Backs Up"
+          staggerDuration={0.04}
+          wordClass="overflow-hidden pb-1 sm:pb-2"
+          style="display:inline-flex"
+        />
+        <br />
+        <StaggerText
+          text="And Things Get Stinky..."
           staggerDuration={0.04}
           wordClass="overflow-hidden pb-1 sm:pb-2"
           style="display:inline-flex"
         />{' '}
         <StaggerText
-          text="(and Things)"
+          text="Call Pinky's!"
           staggerDuration={0.04}
           wordClass="overflow-hidden pb-1 sm:pb-2"
           class="text-pink-600"
-          style="display:inline-flex"
-        />{' '}
-        <StaggerText
-          text="Get Stinky"
-          staggerDuration={0.04}
-          wordClass="overflow-hidden pb-1 sm:pb-2"
-          style="display:inline-flex"
-        />{' '}
-        <StaggerText
-          text="Call Pinky's"
-          staggerDuration={0.04}
-          wordClass="overflow-hidden pb-1 sm:pb-2"
-          class="align-baseline text-[4px]"
           style="display:inline-flex"
         />
       </h1>
@@ -304,14 +165,12 @@ const badges = [
            to the bottom of the screen there, so a second pair of the same
            two actions right here was pure redundancy. Desktop has no
            sticky bar equivalent, so these stay for lg+. -->
-      <div class="mt-9 hidden gap-3.5 lg:mt-3 lg:flex lg:items-center">
-        <SpecularButton
-          href="/contact-us/"
-          size="lg"
-          {...specularPink}
-          client:visible
-          className="h-14 flex-1 justify-center"
-        >
+      <!-- Buttons size to their content (no flex-1). The copy column is
+           now narrower on desktop to keep clear of the van, and flex-1
+           would have stretched each button to fill half of it, making
+           them disproportionately wide. -->
+      <div class="mt-9 hidden flex-wrap gap-3.5 lg:mt-4 lg:flex lg:items-center">
+        <SpecularButton href="/contact-us/" size="lg" {...specularPink} client:visible className="h-14 justify-center">
           Get a Free Estimate
           <ArrowRight className="size-4" aria-hidden="true" />
         </SpecularButton>
@@ -320,14 +179,20 @@ const badges = [
           variant="secondary"
           size="lg"
           icon={Phone}
-          class="h-14 flex-1 justify-center"
+          class="h-14 justify-center"
         >
           {business.hotline.display}
         </Button>
       </div>
     </div>
 
-    <ul class="flex flex-wrap gap-x-8 gap-y-3 lg:hidden" data-reveal style="--reveal-delay:150ms">
+    <!-- One badges list for every breakpoint now. The old code carried
+         two duplicate copies because the desktop one lived inside the
+         absolutely-positioned truck column (a different coordinate
+         space). The van no longer hosts content, so the list is a plain
+         in-flow child here and the duplicate is gone - one list, one
+         source of truth, and no risk of the two drifting apart. -->
+    <ul class="hero-badges flex flex-wrap gap-x-8 gap-y-3" data-reveal style="--reveal-delay:150ms">
       {
         badges.map(({ icon: Icon, label }) => (
           <li class="text-ink-700 flex items-center gap-2 text-sm font-semibold">
@@ -337,5 +202,548 @@ const badges = [
         ))
       }
     </ul>
+
+    <!-- FOREGROUND: the van.
+         Placed INSIDE the Container, as the last flex item, on purpose:
+         at mobile/tablet it is a normal in-flow block, so the section
+         grows to fit copy + van and they can never overlap no matter how
+         the text reflows. At >=1024px .hero-van switches to
+         position:absolute and re-anchors to the section, where it
+         straddles the skyline panel's left edge to create the layered
+         effect. One element, two layout modes - no duplicate markup.
+
+         The cutout has no baked-in ground shadow (unlike the old
+         pinkys-truck.png), so the contact shadow is drawn in CSS as an
+         ::after ellipse and can be tuned per breakpoint rather than
+         being burned into the pixels at one fixed scale.
+
+         aria-hidden + empty alt: decorative. The van's branding is
+         already stated in the h1 and the logo, so announcing it would be
+         duplicative for screen-reader users. -->
+    <div class="hero-van pointer-events-none" aria-hidden="true">
+      <!-- `width` caps the fallback `src` at 1600px. Without it Astro
+           emits the full 4981px master (~439kB) as the src - browsers
+           that honor srcset never fetch it, but it is still the declared
+           fallback and it sets the intrinsic width attribute, so pinning
+           it keeps the worst case at ~117kB. The width/height pair Astro
+           derives from the asset also gives the box a fixed aspect
+           ratio, which reserves layout space and keeps CLS at 0. -->
+      <Image
+        src={pinkysVan}
+        alt=""
+        width={1600}
+        widths={[640, 960, 1280, 1600]}
+        sizes="(max-width: 767px) 92vw, (max-width: 1023px) 76vw, 62vw"
+        quality={82}
+        format="webp"
+        class="h-auto w-full object-contain"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
   </Container>
 </section>
+
+<style>
+  /* ------------------------------------------------------------------
+     HERO COMPOSITION
+     Three genuinely different layouts, not one scaled design:
+       mobile  - skyline as a band behind the copy, van sits below it
+       tablet  - skyline band + van crossing its top edge
+       desktop - skyline panel right, van straddling its left edge
+     All geometry is in this one block so the breakpoints can be read
+     against each other instead of being scattered across utilities.
+  ------------------------------------------------------------------ */
+
+  .hero-section {
+    /* Contains the absolutely-positioned van/skyline. Also the anchor
+       for every percentage offset below. */
+    isolation: isolate;
+
+    /* Single source of truth for horizontal anchoring at >=1024px.
+       --gutter is the space between the viewport edge and the centred
+       container. 1280px is Container.astro's max-w-[1280px] - if that
+       utility changes, change this too. (An earlier revision assumed
+       1400px here; the 120px error meant every ultrawide clearance calc
+       was computed against a container edge that did not exist, and the
+       copy overran the van at 1920/2560 no matter how the other terms
+       were tuned.)
+       BOTH the skyline panel and the van are positioned from this, so
+       they move together and cannot drift apart on wide screens.
+       Three earlier attempts positioned the van with independent
+       ad-hoc expressions (percentages, then max() against a different
+       constant) and each one broke at a width the others passed - the
+       van ended up left of the copy at 1920 and covered the headline.
+       Do not reintroduce a separate formula for the van. */
+    /* The true container gutter, uncapped, exactly matching
+       Container.astro's mx-auto max-w-[1280px]. The van, the skyline
+       panel and the copy's clearance calc all derive from this single
+       value, so all three move together as the viewport widens and can
+       never drift apart.
+       (An earlier revision clamped this at 160px to stop the van sliding
+       right on ultrawide. That desynchronised the van from the copy -
+       which is laid out inside the genuinely-centred container - and the
+       text overran the van by 112px at 1920.) */
+    --gutter: max(0px, calc((100vw - 1280px) / 2));
+
+    /* The van's own width, referenced by both the van rule and the copy
+       clearance calc so the two can never be changed independently. */
+    /* Van width, expressed against the CONTAINER width (capped at
+       1280px) rather than the viewport. Past 1280px the whole hero
+       composition - container, panel, van, copy - stops scaling and just
+       centres, so the van must stop growing at the same moment. Sizing
+       it in vw instead made it keep expanding on ultrawide while the
+       copy column stayed fixed at the container's width, squeezing the
+       text to ~324px at 1920+ no matter how the other terms were tuned.
+       Kept moderate on purpose: the van crosses the panel boundary via
+       its `right` offset (see the 1024px rule), not by being wider. */
+    --container-w: min(100vw, 1280px);
+    /* The container's content box: its width minus its own left+right
+       padding (container-px = clamp(1.25rem, 4vw, 3rem) per side). This
+       is the real space the copy and van share. */
+    --container-inner: calc(var(--container-w) - clamp(1.25rem, 4vw, 3rem) * 2);
+    /* 0.56 of the container: sized so the van's CAB breaks out past the
+       skyline panel's left edge by ~115-130px at every desktop width
+       while its rear stays inside the panel. That asymmetry is the
+       composition - crossing on the left (cab over white), contained on
+       the right (no clipped tail floating on the background).
+       Verified against the panel geometry (panel = 0.52 * container,
+       right-aligned) AND against the asset's real alpha channel: the
+       cab's ink begins just 2% into the van's box, so the box edge is
+       effectively the cab edge - there is no transparent margin to
+       borrow. At 0.5/0.56 the van sat 26px INSIDE the panel and the
+       layered effect vanished; at 0.66 it crossed but squeezed the copy
+       column enough to wrap the CTAs onto two rows. */
+    /* Absorbs --gutter for the same reason the panel does: the panel is
+       now flush to the viewport's right edge and its width includes the
+       gutter, so a container-only van width fell progressively short of
+       the panel's left edge as the viewport grew (crossing went from
+       +39px at 1280 to -601px at 2560). Both must scale together. */
+    /* Base 0.46 of the container, scaled 1.17x on request (+30%, then
+       -10%). --gutter is added so the van keeps pace with the panel,
+       which is also flush to the viewport edge - but capped, because
+       past ~1600px that term grows without limit and the copy column
+       (which must clear the van's full width) collapsed to 191px at
+       2560. The cap freezes the composition's proportions on ultrawide. */
+    --van-w: calc((var(--container-w) * 0.46 + min(var(--gutter), 120px)) * 1.17);
+    /* How far the van's rear is held inside the container's right edge.
+       Referenced by both the van's `right` and the copy's clearance calc
+       so they cannot be changed independently.
+       NOTE the van is positioned from the CONTAINER's right edge while
+       the panel is positioned from the SECTION's (viewport) right edge.
+       Below 1280px those coincide; above it the container is inset by
+       --gutter, so the van must be pulled further right by that same
+       amount to stay locked to the panel - hence --gutter in the value.
+       Without it the van drifted 200px into the panel at 1920. */
+    /* How far the van's rear is held inside the panel's right edge.
+       Larger values slide the whole van LEFT, which is how the cab is
+       pushed across the panel's left boundary. Crossing is controlled
+       here, by this offset - NOT by --van-w. Widening the van also
+       widens the area the copy must clear (the copy's max-width
+       subtracts the van's full box), so it buys crossing at the cost of
+       squeezing the text; shifting costs nothing but the same offset. */
+    /* 11rem baseline minus 100px (6.25rem) to shift the van right, then
+       minus a further 2rem to claw back copy width: the copy must clear
+       the van's full box, and after the +17% resize a 4.75rem inset left
+       only ~360px for a CTA row that needs ~450px, so the buttons
+       stacked. Sliding the van further right widens the copy 1:1. */
+    --van-right: 2.75rem;
+
+    /* (--copy-left removed: it measured the copy's start from the
+       VIEWPORT edge, which was only needed while the van was positioned
+       viewport-relative. Both now share the container's coordinate
+       space, so clearance is computed from --container-inner instead.) */
+  }
+
+  /* ---------- MIDGROUND: skyline ---------- */
+  .hero-skyline {
+    /* MOBILE: full-bleed band across the lower portion, behind the copy.
+       Kept visible (animation on mobile was an explicit requirement) but
+       held back with opacity so the headline stays legible on top of it -
+       this is a legibility scrim on the IMAGE, not a white fade over the
+       composition. */
+    inset: auto 0 0 0;
+    height: 58%;
+    opacity: 0.38;
+    z-index: 0;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%);
+    mask-image: linear-gradient(to bottom, transparent, #000 22%);
+  }
+
+  /* TABLET: still a band, not a side panel. A 44%-wide panel at 768px
+     leaves too little room for both the copy and the van, and it
+     produced a hard vertical seam down the middle of the section. Keeping
+     it horizontal here avoids that entirely - the panel arrangement
+     starts at 1024px where there is genuinely room for two columns. */
+  @media (min-width: 768px) {
+    .hero-skyline {
+      height: 46%;
+      opacity: 0.55;
+    }
+  }
+
+  /* DESKTOP: the skyline becomes a real contained panel with a HARD left
+     edge - no gradient, no feather. The van crossing that edge is what
+     creates the depth; softening it would undo the effect. */
+  @media (min-width: 1024px) {
+    .hero-skyline {
+      /* Flush to the VIEWPORT's right edge (right: 0), full-bleed - the
+         panel is meant to run off the side of the page, not float inside
+         the container. Only the left/top/bottom corners are rounded.
+         Width is still container-derived so the panel stops growing at
+         1280px like the van; when it was viewport-relative the panel
+         kept widening on ultrawide while the van stayed capped,
+         stranding the van 732px inside the panel at 2560. */
+      /* FULL-BLEED: the skyline covers the ENTIRE hero section, edge to
+         edge, rather than being contained in a right-hand panel.
+
+         This drops the old "contained panel" composition (panel = right
+         52%, hard left edge, van straddling that edge). With no panel
+         boundary left to cross, the depth now comes from the scrim below
+         instead: the copy side is washed light so the headline holds
+         contrast, and the image stays clear on the right where the van
+         sits. Do NOT re-add a width/inset here expecting the van crossing
+         to still read - there is no edge to cross any more. */
+      inset: 0;
+      width: auto;
+      height: auto;
+      opacity: 1;
+      border-radius: 0;
+      overflow: hidden;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    /* Legibility scrim over the full-bleed image.
+       A horizontal wash, not a flat overlay: solid enough behind the copy
+       column on the left that the dark headline keeps its contrast, fading
+       out by ~62% so the skyline and the van read clean on the right.
+
+       Attached to .hero-skyline (z-index 0) rather than the section, so it
+       is painted INSIDE the image's own stacking layer and stays underneath
+       the content. As a `.hero-section::before` it sat at z-index 1 in the
+       section's stacking context - above the image but ALSO above the copy,
+       which washed the headline out to near-invisible. */
+    .hero-skyline::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 255, 255, 0.9) 28%,
+        rgba(255, 255, 255, 0.6) 46%,
+        rgba(255, 255, 255, 0) 62%
+      );
+    }
+  }
+
+  /* No 1536px override for the panel. One existed and was the reason the
+     panel kept growing on ultrawide (it re-set width to min(52%, 900px)
+     - viewport-relative - and used a stale 1400px container constant, so
+     it silently outranked the container-relative rule above from 1536px
+     up). The 1024px rule is already gutter- and container-relative and
+     holds at every width. */
+
+  /* ---------- FOREGROUND: the van ---------- */
+  /* MOBILE/TABLET: the van is NOT absolutely positioned. It is a normal
+     in-flow flex item at the end of the section, so the section's height
+     is the sum of (content + van) and the two can never overlap however
+     the text reflows.
+     This replaces an absolute `bottom`-anchored approach that could not
+     be made safe: with the van overlaid and the copy reserving space via
+     padding, any change in text height (longer headline, larger a11y font
+     scale, narrower viewport forcing more line wraps) pushed the copy
+     down into the van while the van stayed put. Reserving space with
+     padding only works if you can predict the text height - you can't.
+     Flow layout makes the clearance structural instead of arithmetic. */
+  .hero-van {
+    position: relative;
+    z-index: 2;
+    width: 92vw;
+    max-width: 460px;
+    margin: 0 auto;
+    align-self: center;
+  }
+
+  /* The contact shadow, drawn rather than baked into the PNG. Sits
+     under the wheels and scales with the element. */
+  /* Contact shadow, drawn rather than baked into the asset. Positioned
+     against the wrapper's bottom edge, which sits flush with the van's
+     wheels because the cropped asset has no transparent padding left
+     (the source had 58% empty canvas; it was trimmed to the alpha
+     bounding box). Sits at z-index 0 under the image (z-index 1) rather
+     than a negative index, which would punch it through the wrapper. */
+  .hero-van > :global(img) {
+    position: relative;
+    z-index: 1;
+  }
+  .hero-van::after {
+    content: '';
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: -1.5%;
+    height: 9%;
+    z-index: 0;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0, 40, 52, 0.34), transparent 72%);
+    filter: blur(10px);
+  }
+
+  /* TABLET: same in-flow stacking as mobile, just wider. The skyline
+     panel is only ~44% wide at 768px, so there is no room for a
+     side-profile van to overlap it AND clear the copy; stacking keeps
+     both legible. The van still crosses the skyline band's edge, so the
+     layered read survives. */
+  @media (min-width: 768px) {
+    .hero-van {
+      width: 76vw;
+      max-width: 620px;
+    }
+  }
+
+  /* DESKTOP: the reference composition. The van's left edge is pinned
+     just right of where the copy column ends, so it can straddle the
+     panel boundary without ever reaching the text or the CTAs.
+     `right` is negative so the rear of the van bleeds off-canvas - a
+     deliberate crop that makes the vehicle read as larger than the
+     frame, rather than a small object floating inside it. */
+  @media (min-width: 1024px) {
+    .hero-van {
+      /* Promoted out of flow: from here up the van overlaps the skyline
+         panel instead of stacking below the copy. Anchored to the
+         SECTION (its containing block), not the Container. */
+      position: absolute;
+      left: auto;
+      /* Shifted 5rem INSIDE the panel's right edge, which pushes the cab
+         out past the panel's LEFT edge and into the white content zone.
+         That crossing is the entire point of the composition - if the
+         van ever sits fully within the panel, the layered/3D read is
+         gone and this is just a photo in a box.
+         Crossing is controlled here, by the offset - NOT by widening
+         --van-w, which starves the copy column and wraps the headline.
+
+         The containing block here is the SECTION (.hero-content is set
+         to position:static at this breakpoint precisely so that holds),
+         which is the same coordinate space the skyline panel uses. So
+         this offset mirrors the panel's own `right: var(--gutter)`,
+         plus a small inset that keeps the van's rear INSIDE the panel.
+         Holding the tail inside matters: when it hung past the panel's
+         right edge it read as a clipped object floating on the white
+         background. The crossing must happen at the van's FRONT (cab
+         over white), never its rear. */
+      /* Measured from the VIEWPORT's right edge, matching the panel's
+         `right: 0`. Both now share that reference, so the van keeps a
+         constant inset from the panel's right edge at every width. When
+         the panel was gutter-inset and the van gutter-offset they agreed
+         up to 1280px and then diverged - the van ended up stranded 768px
+         inside the panel at 2560. */
+      right: var(--van-right);
+      /* 4.5rem baseline + 40px (2.5rem) to lift the van. */
+      bottom: 7rem;
+      /* 54vw at 1024 (=553px) rising to the 940px cap by ~1740px. Wider
+         than this starves the copy column at 1024-1180, where the
+         viewport is only just wide enough for two columns. Defined once
+         as --van-w so the copy's clearance calc uses the same value. */
+      width: var(--van-w);
+      /* Clears the tablet rule's max-width: 620px, which otherwise
+         carries into this breakpoint and silently caps the van - it was
+         why widening --van-w from 0.5 to 0.68 never moved the cab and
+         the crossing stayed pinned at -26px. */
+      max-width: none;
+      margin: 0;
+    }
+    .hero-van::after {
+      bottom: 2%;
+      height: 9%;
+      filter: blur(16px);
+      background: radial-gradient(ellipse at center, rgba(0, 40, 52, 0.42), transparent 70%);
+    }
+  }
+
+  /* No further width-specific van rules. The single gutter-relative rule
+     at 1024px+ covers every desktop width, including ultrawide, because
+     both --gutter and the min() width cap scale on their own. Adding
+     per-breakpoint overrides here is what broke 1920/2560 previously. */
+
+  /* ---------- CONTENT ----------
+     NOTE every .hero-content rule must be :global(). .hero-content is a
+     class on the <Container> COMPONENT, so Astro never stamps this
+     component's data-astro-cid-* attribute onto it, and a plain
+     `.hero-content { }` selector compiles to
+     `.hero-content[data-astro-cid-yodha2z4]` - which matches nothing.
+     Every rule targeting it was silently dead; the container rendered
+     with padding-top: 0 no matter what was written here, which is why
+     the hero badge sat flush against the header. */
+
+  /* MOBILE/TABLET: reserve room at the BOTTOM OF THE CONTAINER for the
+     van, so it never sits on top of the copy or the badges. The padding
+     goes on the Container (not .hero-copy) because the badges list is a
+     sibling of .hero-copy - padding on .hero-copy alone left the badges
+     hanging below the reserved zone, straight into the van. This is the
+     guard against the "truck covers the text" failure. */
+  /* No van-clearance padding needed: the van is an in-flow sibling here,
+     so the section simply grows to contain it.
+     (Earlier revisions reserved space with padding-bottom on this
+     element. That could not be made reliable - the required reserve
+     depends on the rendered text height, which changes with viewport
+     width, headline length, and the accessibility widget's font scaling.
+     Flow layout removes the guesswork.) */
+  :global(.hero-content) {
+    /* relative below 1024px: the van is an in-flow child here and the
+       copy/badges need a stacking context above the skyline band. */
+    position: relative;
+    z-index: 3;
+    /* 2rem, not 6rem. The 6rem value dated from when these rules were
+       silently not applying (see the scoping note above) and was never
+       actually seen on screen; once :global() made them live it rendered
+       as a 95px void between the header and the badge. Desktop keeps a
+       tighter 2.5rem of its own below. */
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+  }
+
+  /* TABLET: van sits in a band below the copy, so the clearance stays
+     vertical (as on mobile) - just less of it, since the van is
+     proportionally shorter relative to the taller viewport. */
+  /* Tablet: van is 76vw wide -> ~33vw tall, anchored 2rem from the
+     bottom. Same derivation as mobile. */
+  @media (min-width: 768px) {
+    :global(.hero-content) {
+      /* Same correction as mobile - 6rem was a never-rendered value from
+         when these rules were dead. */
+      padding-top: 2.5rem;
+      padding-bottom: 3.5rem;
+    }
+    .hero-copy,
+    .hero-badges {
+      max-width: 34rem;
+    }
+  }
+
+  /* DESKTOP: the van moves off to the right, so vertical clearance is no
+     longer needed - horizontal clearance takes over. The copy column is
+     capped so its text ends left of the van's leading edge. Measured
+     against the real text boxes, not the wrapper: at 1440px an earlier
+     36rem cap still let the headline and the phone CTA run ~70px under
+     the van's nose. 30rem clears it with margin at every desktop width. */
+  /* DESKTOP: clearance becomes horizontal. The van occupies the right
+     62vw (offset -6%), so its leading edge sits at roughly 100% - 56vw
+     of the viewport. The copy is capped just short of that, MINUS the
+     container's own left gutter, so the cap is measured in the same
+     space the text actually occupies.
+     Deriving this from vw rather than hardcoding rem values is what
+     keeps it correct at every width - fixed caps tested clean at 1280
+     and 1440 but silently regressed at 1920, where the container
+     centres and the van's edge lands somewhere else entirely.
+     min() with a rem ceiling stops the line length from getting
+     uncomfortably long on ultrawide. */
+  @media (min-width: 1024px) {
+    :global(.hero-content) {
+      /* Tight desktop padding so the hero fits one viewport without
+         scrolling, but padding-top is deliberately larger than the
+         bottom: at 1rem the "Emergency Techs On Call Right Now" badge
+         sat directly against the header's bottom edge with no visual
+         separation. 2.5rem gives it room to read as its own element. */
+      padding-top: 2.5rem;
+      padding-bottom: 1rem;
+      /* static (not relative) so the absolutely-positioned van inside it
+         resolves against the SECTION instead of this container. The van
+         and the skyline panel must share one coordinate space: while the
+         van was container-relative and the panel section-relative, every
+         attempt to align them needed a --gutter correction term, and the
+         sign of that term was wrong on one side of 1280px or the other
+         (the van ended up 26px inside the panel at 1280 and 200px inside
+         at 1920, or overhanging once the sign was flipped).
+         Below 1024px this stays `relative` (from the Tailwind class) and
+         the van is an in-flow child - see .hero-van. */
+      position: static;
+    }
+    /* The copy must end left of the van's box. Measured from the asset's
+       alpha channel, the leading transparent margin is NOT usable
+       clearance: while the CAB ink starts ~25% in, the rear bumper and
+       chassis reach all the way to x=0 on some rows, so the box's own
+       left edge is the real boundary. (An earlier version assumed a 22%
+       transparent lead and multiplied the van width by 0.78 - that
+       overlapped at every width where the van sat low enough for the
+       chassis rows to meet the text.)
+
+       Van box left edge = 100vw - gutter + 3.5rem - vanWidth.
+       Container left gutter = gutter + container-px.
+       So the usable copy width is that box edge minus the container's
+       own left inset, minus a 2rem visual breathing gap. */
+    .hero-copy,
+    .hero-badges {
+      /* Copy ends left of the van BOX, plus a credit for the cab's
+         transparent leading margin (the headline's tallest lines sit
+         above the cab, where the asset is empty for its first ~25% -
+         measured from the alpha channel).
+
+         No max() floor here. An earlier revision forced a 31rem minimum
+         so the two CTAs would always sit side by side, but that floor
+         outranked the clearance calc and pushed the headline and phone
+         button straight under the van at 1024/1440/1920. Clearance wins;
+         the CTA row is allowed to wrap instead (it is flex-wrap, and a
+         stacked pair reads fine). Never reintroduce a floor here without
+         re-running the pixel-overlap QA.
+
+         Two different clearances, because the van's silhouette is not a
+         rectangle. Measured from the asset's alpha channel, per 5% band:
+           top 0-25%  : ink starts 25% into the box (empty above the roof)
+           middle/low : ink starts 0-6% (cab, chassis, wheels)
+         So the HEADLINE, which sits in the upper band, may safely extend
+         over the van's empty top-left corner (see the h1 rule below),
+         while the paragraph, CTAs and badges must clear the cab.
+
+         The van's own left edge is the boundary, but the van sits LOW in
+         the section - its top is well below the paragraph - so the
+         binding constraint is only the CTA row and badges. 1rem of
+         breathing room rather than 2rem buys the ~40px that keeps the
+         450px CTA row on one line. Verified by the pixel-overlap QA. */
+      /* Reserve the van's FULL width. Capping the reserved share (at 52%
+         of the container) to stop the enlarged van squeezing the copy
+         looked reasonable but is wrong: the van grows in BOTH directions
+         from its box, so the extra width does move its cab left toward
+         the text, and real van pixels landed on the headline and
+         paragraph from 1280 up. If the copy ends up too narrow, shrink
+         --van-w or reduce --van-right; do not cap the reservation. */
+      max-width: min(
+        38rem,
+        calc(100vw - var(--gutter) - clamp(1.25rem, 4vw, 3rem) - var(--van-w) - var(--van-right) - 0.5rem)
+      );
+    }
+
+    /* The headline keeps .hero-copy's van-clearance width. To stop "Up"
+       falling onto a line of its own, the desktop type scale is reduced
+       just enough that "When Your Plumbing Backs Up" fits the column on
+       one line (measured: the line needs ~778px at 56px, and the column
+       is ~478px, so it fits at ~35px).
+       Widening the h1 instead was tried and reverted: only its first
+       line clears the van's roof, so a wider block put lines 2-3 over
+       the cab and reflowed the rest of the headline. */
+    /* (No override applied - see the report. Shrinking the type to fit
+       would have taken the headline from 56px to ~35px.) */
+  }
+
+  /* No separate ultrawide rule is needed: --gutter is now the real,
+     uncapped container gutter, so the single 1024px+ clearance calc
+     stays correct at every width including 1920/2560. */
+
+  /* No min-height below 1024px: the section is sized by its in-flow
+     children (copy + van). Forcing a floor here would only add dead
+     space under the van on short viewports. The Container's own
+     min-h-[600px]/sm:min-h-[640px] utilities are likewise neutralised
+     below, for the same reason. */
+  /* Desktop only: the van is absolutely positioned from 1024px up, so it
+     no longer contributes to the section's height. Without a floor the
+     section would collapse to the copy's height and the van would be
+     clipped by overflow-hidden. Sized to fit the composition while still
+     leaving the hero within one 768px-tall viewport. */
+  @media (min-width: 1024px) {
+    .hero-section {
+      min-height: 40rem;
+    }
+  }
+</style>

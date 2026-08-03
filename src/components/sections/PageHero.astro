@@ -18,11 +18,26 @@ interface Props {
   imageAlt: string;
   /** 30% larger photo — used on About Us and Services pages. */
   large?: boolean;
+  /** Extra multiplier on top of the base/large size. 1.2 = 20% larger. */
+  imageScale?: number;
+  /** Animated pink glow travelling around the photo's edge. */
+  glowRing?: boolean;
 }
 
-const { title, description, crumbs, image, imageAlt, large = false } = Astro.props;
-const imageWidth = large ? 546 : 420;
-const imageHeight = large ? 416 : 320;
+const { title, description, crumbs, image, imageAlt, large = false, imageScale = 1, glowRing = false } = Astro.props;
+
+const baseWidth = large ? 546 : 420;
+const baseHeight = large ? 416 : 320;
+const imageWidth = Math.round(baseWidth * imageScale);
+const imageHeight = Math.round(baseHeight * imageScale);
+
+// The photo is capped by its grid column long before it hits max-width (at
+// 1440px the column is ~497px against a 546px cap), so scaling the image
+// only does something visible if the column grows with it. Columns are
+// fr-based, so for the photo column to grow by k, the text column has to go
+// from a to (a + 1) / k - 1.
+const TEXT_COL = 1.3;
+const textCol = +((TEXT_COL + 1) / imageScale - 1).toFixed(3);
 ---
 
 <section class="relative overflow-hidden bg-white">
@@ -41,55 +56,62 @@ const imageHeight = large ? 416 : 320;
   >
   </div>
 
-  <Container class="relative grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[1.3fr_1fr] lg:py-24">
-    <div>
-      <nav aria-label="Breadcrumb">
-        <ol class="text-ink-500 flex flex-wrap items-center gap-1.5 text-xs font-medium">
-          {
-            crumbs.map((c, i) => (
-              <li class="flex items-center gap-1.5">
-                {i > 0 && <ChevronRight className="size-3.5 text-ink-300" aria-hidden="true" />}
-                {c.href ? (
-                  <a href={c.href} class="transition-colors hover:text-pink-600">
-                    {c.label}
-                  </a>
-                ) : (
-                  <span aria-current="page" class="text-ink-900">
-                    {c.label}
-                  </span>
-                )}
-              </li>
-            ))
-          }
-        </ol>
-      </nav>
-      <h1
-        class="font-display text-ink-900 mt-4 text-4xl leading-[1.03] font-extrabold tracking-[-0.02em] text-balance sm:text-5xl"
-      >
-        <StaggerText text={title} staggerDuration={0.04} wordClass="overflow-hidden pb-0.5 sm:pb-1" />
-      </h1>
-      {description && <p class="text-ink-600 mt-4 max-w-xl text-balance">{description}</p>}
-    </div>
-
-    <div class="relative hidden lg:block" data-reveal="right">
-      <div
-        class="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-pink-500/15 to-teal-500/10 blur-2xl"
-        aria-hidden="true"
-      >
+  <Container class="relative">
+    <div
+      class="grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[var(--hero-text-col)_1fr] lg:py-24"
+      style={`--hero-text-col:${textCol}fr`}
+    >
+      <div>
+        <nav aria-label="Breadcrumb">
+          <ol class="text-ink-500 flex flex-wrap items-center gap-1.5 text-xs font-medium">
+            {
+              crumbs.map((c, i) => (
+                <li class="flex items-center gap-1.5">
+                  {i > 0 && <ChevronRight className="size-3.5 text-ink-300" aria-hidden="true" />}
+                  {c.href ? (
+                    <a href={c.href} class="transition-colors hover:text-pink-600">
+                      {c.label}
+                    </a>
+                  ) : (
+                    <span aria-current="page" class="text-ink-900">
+                      {c.label}
+                    </span>
+                  )}
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+        <h1
+          class="font-display text-ink-900 mt-4 text-4xl leading-[1.03] font-extrabold tracking-[-0.02em] text-balance sm:text-5xl"
+        >
+          <StaggerText text={title} staggerDuration={0.04} wordClass="overflow-hidden pb-0.5 sm:pb-1" />
+        </h1>
+        {description && <p class="text-ink-600 mt-4 max-w-xl text-balance">{description}</p>}
       </div>
-      <Image
-        src={image}
-        alt={imageAlt}
-        width={imageWidth}
-        height={imageHeight}
-        densities={[1, 2]}
-        quality="high"
-        class:list={[
-          'shadow-card-hover ml-auto aspect-[4/3] w-full rounded-[2rem] object-cover',
-          large ? 'max-w-[546px]' : 'max-w-[420px]'
-        ]}
-        loading="eager"
-      />
+
+      <div class="relative hidden lg:block" data-reveal="right">
+        <div
+          class="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-pink-500/15 to-teal-500/10 blur-2xl"
+          aria-hidden="true"
+        >
+        </div>
+        <div
+          class:list={['ml-auto w-full rounded-[2rem]', glowRing && 'photo-glow-ring']}
+          style={`max-width:${imageWidth}px`}
+        >
+          <Image
+            src={image}
+            alt={imageAlt}
+            width={imageWidth}
+            height={imageHeight}
+            densities={[1, 2]}
+            quality="high"
+            class="shadow-card-hover aspect-[4/3] w-full rounded-[2rem] object-cover"
+            loading="eager"
+          />
+        </div>
+      </div>
     </div>
   </Container>
 </section>

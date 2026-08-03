@@ -59,11 +59,23 @@ const stackImages = await Promise.all(
     image={teamPhoto}
     imageAlt="The Pinky's Plumbing team lined up in front of two service trucks"
     large
+    imageScale={1.2}
+    glowRing
   />
 
   <section class="bg-white py-16 sm:py-20">
     <Container class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-      <div class="relative mx-auto aspect-square w-full max-w-[494px]" data-reveal="left">
+      <!-- overflow-x-clip below lg: PhotoStack fans its cards out to the
+           right of the wrapper, which pushed 33px past a 390px viewport and
+           gave the page a real horizontal scrollbar (scrollWidth 422 vs
+           390). `clip` not `hidden` so it does not become a scroll
+           container. Left visible at lg+, where the grid column has room
+           for the full fan and clipping would cut the cards. The "Drag me"
+           badge is a sibling, so it is unaffected. -->
+      <div
+        class="relative mx-auto aspect-square w-full max-w-[494px] overflow-x-clip lg:overflow-x-visible"
+        data-reveal="left"
+      >
         <PhotoStack images={stackImages} client:visible />
         <span
           class="shadow-card-hover border-ink-100 text-ink-900 pointer-events-none absolute -right-3 -bottom-3 z-10 flex items-center gap-1.5 rounded-full border bg-white px-3.5 py-2 text-xs font-semibold"

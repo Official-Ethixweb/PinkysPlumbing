@@ -1,15 +1,16 @@
 ---
 /**
- * Infinite left-to-right review marquee. Pure CSS (see `marquee-ltr` in
- * global.css), no JS, no Swiper. The 3 real reviews are duplicated once
- * (the minimum a seamless loop needs); the duplicate copy is aria-hidden
- * so screen readers only ever hear each review once.
+ * Infinite left-to-right review marquee. The loop itself is pure CSS (see
+ * `marquee-ltr` in global.css), no Swiper. The 3 real reviews are duplicated
+ * once (the minimum a seamless loop needs); the duplicate copy is aria-hidden
+ * so screen readers only ever hear each review once. The one bit of JS is the
+ * hover slow-down at the bottom of this file.
  */
 import TestimonialCard from './TestimonialCard.astro';
 import { testimonials } from '../../data/business';
 ---
 
-<div class="group relative left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+<div class="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden" data-marquee>
   <div
     class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-teal-900 to-transparent sm:w-32"
   >
@@ -19,7 +20,11 @@ import { testimonials } from '../../data/business';
   >
   </div>
 
-  <div class="animate-marquee-ltr flex w-max gap-6 py-2 group-hover:[animation-play-state:paused]">
+  <!-- py-8 (not py-2): cards lift 12px and scale 5% on hover, and the wrapper
+       above is overflow-hidden for the loop, so the track needs vertical
+       slack or the raised card gets sliced off at the top. A ~350px card
+       grows ~9px per side at 1.05, so 12+9=21px of the 32px is used. -->
+  <div class="animate-marquee-ltr flex w-max gap-6 py-8" data-marquee-track>
     <div class="flex shrink-0 gap-6">
       {testimonials.map((t) => <TestimonialCard {...t} />)}
     </div>
@@ -28,3 +33,37 @@ import { testimonials } from '../../data/business';
     </div>
   </div>
 </div>
+
+<script>
+  // Hovering the strip slows the loop to ~1/3 speed instead of stopping it.
+  //
+  // Deliberately not `group-hover:[animation-duration:100s]`: a CSS duration
+  // swap recomputes progress from elapsed time, so the track snaps backwards
+  // the instant you hover (18s into a 36s loop is 50%, but 18s of 100s is
+  // 18%). updatePlaybackRate() keeps the current position and just changes
+  // how fast it advances from there, so the slow-down is seamless.
+  const HOVER_RATE = 0.36; // 36s idle => ~100s while hovered
+
+  function initMarqueeHover() {
+    document.querySelectorAll<HTMLElement>('[data-marquee]').forEach((wrap) => {
+      if (wrap.dataset.marqueeBound) return;
+      wrap.dataset.marqueeBound = 'true';
+
+      const track = wrap.querySelector<HTMLElement>('[data-marquee-track]');
+      if (!track) return;
+
+      const setRate = (rate: number) => {
+        for (const anim of track.getAnimations()) anim.updatePlaybackRate(rate);
+      };
+
+      // mouseenter/leave, not pointer*: this is a pointing-device affordance,
+      // and pointerenter would latch the slow rate on touch with no
+      // corresponding leave event to undo it.
+      wrap.addEventListener('mouseenter', () => setRate(HOVER_RATE));
+      wrap.addEventListener('mouseleave', () => setRate(1));
+    });
+  }
+
+  initMarqueeHover();
+  document.addEventListener('astro:page-load', initMarqueeHover);
+</script>

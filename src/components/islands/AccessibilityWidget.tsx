@@ -85,9 +85,12 @@ const ALIGN_OPTIONS: { value: TextAlign; label: string; icon: typeof AlignLeft }
 ];
 
 function focusA11yTrigger() {
-  document.querySelectorAll<HTMLElement>('[data-a11y-trigger]').forEach((el) => {
-    if (el.offsetParent !== null) el.focus();
-  });
+  // There is only one trigger now (one circle, all breakpoints). The old
+  // offsetParent visibility check existed to pick the visible one of two, and
+  // never matched anyway - offsetParent is always null on position:fixed
+  // elements, so closing with Esc silently dropped focus instead of
+  // returning it to the button.
+  document.querySelector<HTMLElement>('[data-a11y-trigger]')?.focus();
 }
 
 function focusableIn(container: HTMLElement) {
@@ -251,7 +254,13 @@ export default function AccessibilityWidget() {
         {announcement}
       </div>
 
-      {/* Desktop edge tab (mirrors the coupon tab on the opposite edge) */}
+      {/* Floating circular trigger, bottom-left at every breakpoint - the
+          mirror image of the chat launcher in the opposite corner (same teal
+          circle, same pink ring, same offsets), one size step smaller than it
+          (12/14 vs the launcher's 14/16) so chat stays the louder of the two.
+          Deliberately no pulse-ring animation, unlike the chat launcher: this
+          is the button that opens the panel where motion can be switched off,
+          so it shouldn't be the thing animating at people. */}
       <button
         type="button"
         data-a11y-trigger
@@ -260,33 +269,24 @@ export default function AccessibilityWidget() {
         aria-controls="a11y-panel"
         aria-label={open ? 'Close accessibility menu' : 'Open accessibility menu (Alt+A)'}
         onClick={() => toggleA11yPanel()}
-        className="z-widget-tab fixed top-[38%] right-0 hidden w-12 -translate-y-1/2 flex-col items-center gap-2 rounded-l-2xl border border-r-0 border-white/15 bg-teal-900 py-5 text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] transition-[width,padding] duration-300 hover:w-14 lg:flex"
+        className="z-widget-tab group fixed bottom-24 left-4 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal-900 text-white shadow-[0_0_0_3px_var(--color-pink-350),var(--shadow-card-hover)] transition-transform hover:scale-105 active:scale-95 lg:bottom-6 lg:left-6 lg:h-14 lg:w-14"
       >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{ background: 'radial-gradient(circle at 32% 26%, rgba(243,125,187,0.35), transparent 60%)' }}
+        />
         {open ? (
-          <X className="size-4 shrink-0" aria-hidden="true" />
+          <X className="relative size-5 shrink-0" aria-hidden="true" />
         ) : (
-          <Accessibility className="size-4 shrink-0" aria-hidden="true" />
+          <Accessibility className="relative size-5 shrink-0" aria-hidden="true" />
         )}
-        <span className="font-display [transform:rotate(180deg)] text-[11px] font-bold tracking-wider uppercase [writing-mode:vertical-rl]">
-          {open ? 'Close' : 'Accessibility'}
-        </span>
       </button>
 
-      {/* Mobile floating trigger (bottom-left, mirrors the chat launcher on the right) */}
-      <button
-        type="button"
-        data-a11y-trigger
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls="a11y-panel"
-        aria-label={open ? 'Close accessibility menu' : 'Open accessibility menu'}
-        onClick={() => toggleA11yPanel()}
-        className="z-widget-tab fixed bottom-24 left-4 inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-white bg-teal-900 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.4)] transition-transform active:scale-95 lg:hidden"
-      >
-        <Accessibility className="h-5 w-5" />
-      </button>
-
-      <div className="z-widget-panel fixed inset-x-3 bottom-[calc(var(--sticky-bar-h)+0.75rem+env(safe-area-inset-bottom,0px))] lg:inset-x-auto lg:top-24 lg:right-20 lg:bottom-auto lg:left-auto">
+      {/* Anchored above the trigger at both breakpoints (trigger top =
+          96+48 mobile, 24+56 desktop), so panel opens out of button
+          instead of floating in a different corner. */}
+      <div className="z-widget-panel fixed bottom-40 left-3 lg:bottom-24 lg:left-6">
         <AnimatePresence>
           {open && (
             <motion.div
