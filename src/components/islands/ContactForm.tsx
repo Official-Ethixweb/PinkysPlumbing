@@ -12,7 +12,8 @@ import {
   MessageSquare,
   CircleCheck,
   AlertTriangle,
-  HelpCircle
+  HelpCircle,
+  type LucideIcon
 } from 'lucide-react';
 import { contactSchema, OTHER_SERVICE, type ContactFormValues } from '../../lib/contactSchema';
 import { zodResolver } from '../../lib/zodResolver';
@@ -21,9 +22,16 @@ import { services } from '../../data/services';
 import SpecularButton from './SpecularButton';
 import { specularPink } from '../../lib/specularPresets';
 import { serviceIconMap } from '../../lib/serviceIcons';
+import type { ImageMetadata } from 'astro';
 
+// The 8 real services resolve to the custom pink/teal SVG pair (only the
+// resting `.default` art makes sense in this small radio-tile context -
+// there's no hover-swap here, each tile is either selected or not). The two
+// catch-all tiles have no custom artwork, so they keep their Lucide icons.
+// `icon` therefore holds two different shapes; `'src' in icon` at render
+// time is what tells the two apart.
 const serviceTiles = [
-  ...services.map((s) => ({ title: s.title, icon: serviceIconMap[s.icon] })),
+  ...services.map((s) => ({ title: s.title, icon: serviceIconMap[s.icon].default })),
   { title: 'Emergency / Not Sure', icon: AlertTriangle },
   { title: OTHER_SERVICE, icon: HelpCircle }
 ];
@@ -201,23 +209,45 @@ export default function ContactForm() {
       <fieldset>
         <legend className={labelBase}>What Do You Need?</legend>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          {serviceTiles.map(({ title, icon: Icon }) => (
-            <label
-              key={title}
-              className="has-checked:shadow-glow-pink group border-ink-200 hover:border-ink-300 hover:bg-ink-50 relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border bg-white px-2.5 py-4 text-center transition-colors has-checked:border-pink-500 has-checked:bg-pink-50"
-            >
-              <input type="radio" value={title} className="sr-only" {...register('service')} />
-              <CircleCheck
-                className="absolute top-2 right-2 size-4 text-pink-600 opacity-0 transition-opacity group-has-checked:opacity-100"
-                aria-hidden="true"
-              />
-              <Icon
-                className="text-ink-400 size-6 transition-colors group-has-checked:text-pink-600"
-                aria-hidden="true"
-              />
-              <span className="text-ink-700 text-xs leading-tight font-semibold">{title}</span>
-            </label>
-          ))}
+          {serviceTiles.map(({ title, icon }) => {
+            // `typeof` cannot discriminate these two: Astro's .svg asset
+            // import is a callable Astro component FACTORY (typeof
+            // 'function' - meta like `.src` is Object.assign'd onto the
+            // factory itself, not returned as a separate plain object), and
+            // lucide-react v1 icons are forwardRef-wrapped objects (typeof
+            // 'object', not 'function' either). `.src` is the one property
+            // unique to the SVG import, so its presence is the real test.
+            const isImage = 'src' in icon;
+            const Icon = isImage ? null : (icon as LucideIcon);
+            return (
+              <label
+                key={title}
+                className="has-checked:shadow-glow-pink group border-ink-200 hover:border-ink-300 hover:bg-ink-50 relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border bg-white px-2.5 py-4 text-center transition-colors has-checked:border-pink-500 has-checked:bg-pink-50"
+              >
+                <input type="radio" value={title} className="sr-only" {...register('service')} />
+                <CircleCheck
+                  className="absolute top-2 right-2 size-4 text-pink-600 opacity-0 transition-opacity group-has-checked:opacity-100"
+                  aria-hidden="true"
+                />
+                {isImage ? (
+                  <img
+                    src={(icon as ImageMetadata).src}
+                    alt=""
+                    aria-hidden="true"
+                    className="size-6 opacity-70 grayscale transition-[opacity,filter] group-has-checked:opacity-100 group-has-checked:grayscale-0"
+                  />
+                ) : (
+                  Icon && (
+                    <Icon
+                      className="text-ink-400 size-6 transition-colors group-has-checked:text-pink-600"
+                      aria-hidden="true"
+                    />
+                  )
+                )}
+                <span className="text-ink-700 text-xs leading-tight font-semibold">{title}</span>
+              </label>
+            );
+          })}
         </div>
         {errors.service && <p className={errorText}>{errors.service.message}</p>}
       </fieldset>

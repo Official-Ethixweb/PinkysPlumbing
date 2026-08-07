@@ -33,3 +33,7 @@ source-media/
 
 # working folder of raw screenshots/downloads, not site assets
 public/new updates/
+
+# raw source SVG drop for the service icons - the actual assets used by the
+# site were copied+renamed into src/assets/icons/services/
+public/OurServices/
