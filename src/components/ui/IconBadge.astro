@@ -15,12 +15,13 @@ const { icon, class: className, size = 'md' } = Astro.props;
 // src/lib/serviceIcons.ts) is already a fully colored, finished mark, and a
 // gradient tile behind it fought the artwork rather than framing it. This is
 // now just a sized, positioned cell for the two cross-fading images.
-// Sized 20% over the original 36/48/64px scale (size-9/12/16) at the
-// request that followed the icon swap.
+// Two successive +20% bumps from the original 36/48/64px scale
+// (size-9/12/16): first to 43.2/57.6/76.8px, then to the current
+// 51.84/69.12/92.16px.
 const sizes = {
-  sm: 'size-[2.7rem] [&_img]:size-[2.7rem]',
-  md: 'size-[3.6rem] [&_img]:size-[3.6rem]',
-  lg: 'size-[4.8rem] [&_img]:size-[4.8rem]'
+  sm: 'size-[3.24rem] [&_img]:size-[3.24rem]',
+  md: 'size-[4.32rem] [&_img]:size-[4.32rem]',
+  lg: 'size-[5.76rem] [&_img]:size-[5.76rem]'
 };
 ---
 
